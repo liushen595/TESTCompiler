@@ -2,7 +2,7 @@
     // "cmake.generator": "Visual Studio 18 2026",
     // "cmake.architecture": "x64",
     "cmake.configureArgs": [],
-    "cmake.buildDirectory": "${workspaceFolder}/build",
+    "cmake.buildDirectory": "${workspaceFolder}/build/cmake-build/",
     "cmake.configureOnOpen": true,
     "cmake.cmakePath": "cmake",
     "cmake.configureSettings": {
@@ -99,6 +99,14 @@
         "span": "cpp",
         "variant": "cpp",
         "string_view": "cpp",
-        "text_encoding": "cpp"
+        "text_encoding": "cpp",
+        "algorithm": "cpp",
+        "deque": "cpp",
+        "map": "cpp",
+        "queue": "cpp",
+        "set": "cpp",
+        "sstream": "cpp",
+        "stack": "cpp",
+        "xtree": "cpp"
     }
 }

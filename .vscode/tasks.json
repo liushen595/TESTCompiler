@@ -7,7 +7,7 @@
             "command": "cmake",
             "args": [
                 "-B",
-                "${workspaceFolder}/build",
+                "${workspaceFolder}/bin/build",
                 "-DCURRENT_FILE=${file}",
                 "-S",
                 "${workspaceFolder}",
@@ -26,7 +26,7 @@
             "command": "cmake",
             "args": [
                 "--build",
-                "${workspaceFolder}/build",
+                "${workspaceFolder}/bin/build",
                 "--config",
                 "Debug",
                 "--target",
@@ -49,7 +49,7 @@
             "command": "cmake",
             "args": [
                 "--build",
-                "${workspaceFolder}/build",
+                "${workspaceFolder}/bin/build",
                 "--config",
                 "Release",
                 "--target",
@@ -72,7 +72,7 @@
             "command": "cmake",
             "args": [
                 "--build",
-                "${workspaceFolder}/build",
+                "${workspaceFolder}/bin/build",
                 "--config",
                 "Debug",
                 "--target",
