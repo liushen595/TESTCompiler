@@ -6,6 +6,33 @@
 #include <iostream>
 #include <algorithm>
 
+int precedence(char op) {
+    switch (op) {
+    case '*':
+    case '+':
+        return 3;
+    case '.':
+        return 2;
+    case '|':
+        return 1;
+    default:
+        return 0;
+    }
+}
+
+bool isLeftAssociative(char op) {
+    switch (op) {
+    case '*':
+    case '+':
+        return false; // 右结合
+    case '.':
+    case '|':
+        return true;  // 左结合
+    default:
+        return true;  // 默认左结合
+    }
+}
+
 namespace Compiler {
 
     bool RegexEngine::loadRulesFromFile(const std::string& filePath) {
@@ -50,10 +77,15 @@ namespace Compiler {
         preprocessRegex(regexrules);
 
         // 2. 将中缀表达式转换为后缀表达式
-        // std::string postfixRegex = infixToPostfix(processedRegex);
+        for (auto &item : regexrules) {
+            std::string &regex = item.second;
+            std::string postfixRegex = infixToPostfix(regex);
+            regex = postfixRegex;
+        }
 
         // 3. 构建NFA
         // TODO: 实现使用MYT算法构建NFA的逻辑
+
 
         return nullptr; // 暂时返回空指针，后续需要实现
     }
@@ -89,7 +121,15 @@ namespace Compiler {
                         auto it = regexrules.find(macro);// 查找宏定义
 
                         if (it != regexrules.end()) {
-                            // 宏替换
+                            // 宏替换, 并将宏名称转换为大写, 当作占位符
+                            // std::string macro_upper = macro.substr(1, macro.size() - 2);
+                            // for (size_t j = 0; j < macro_upper.size(); j++) {
+                            //     macro_upper[j] = toupper(macro_upper[j]);
+                            // }
+                            // 将宏定义单独拿出来
+                            // macros[macro_upper] = it->second;
+                            // 宏定义本身也要替换成占位符
+                            // it->second = macro_upper;
                             regex.replace(macro_begin + 1, macro_end - macro_begin - 1, it->second);
                             i = macro_begin + it->second.size() + 1; // 更新 i 位置，避免重复扫描
                         }
@@ -112,14 +152,64 @@ namespace Compiler {
 
     std::string RegexEngine::infixToPostfix(const std::string& regex) {
         // 将中缀表达式转换为后缀表达式
+        std::string postfix; // 存储后缀表达式
+        std::stack<char> ops; // 操作符栈
+        if (regex == "/\\*" || regex == "\\*/") {
+            if (regex == "/\\*") return "/*";
+            else return "*/"; // 如果是注释符号，直接返回
+        }
 
-        // TODO: 实现将中缀表达式转换为后缀表达式的逻辑
+        for (size_t i = 0; i < regex.size(); i++) {
+            char c = regex[i];
+            if (std::isalnum(c)) {
+                postfix += c;
+            }
+            else if (c == '\\') { // 转义字符
+                if (i + 1 < regex.size()) {
+                    postfix += regex[i + 1];
+                    i++; // 跳过下一个字符
+                }
+            }
+            else if (c == '(') {
+                ops.push(c);
+            }
+            else if (c == ')') {
+                while (!ops.empty() && ops.top() != '(') {
+                    postfix += ops.top();
+                    ops.pop();
+                }// stack:(abcde -> abcde(
+                if (!ops.empty()) ops.pop(); // 弹出并丢弃左括号
+            }
+            else if (c == '.' || c == '|' || c == '*' || c == '+') {
+                while (!ops.empty() && precedence(ops.top()) >= precedence(c) && isLeftAssociative(c)) {
+                    postfix += ops.top();
+                    ops.pop();
+                }
+                ops.push(c);
+            }
+            else { // 其他符号直接加入后缀表达式
+                if (c == '/') {
+                    if (i + 1 >= regex.size()) { // 如果是除号
+                        postfix += c;
+                    }
+                }
+                else { postfix += c; }
+            }
+        }
+        // 将栈中剩余操作符弹出
+        while (!ops.empty()) {
+            postfix += ops.top();
+            ops.pop();
+        }
 
-        return regex; // 暂时直接返回原始正则表达式
+        return postfix;
     }
 
     std::shared_ptr<NFA> RegexEngine::createBasicNFA(char c) {
         // 创建基本NFA，接受单个字符
+        std::shared_ptr<NFA> nfa = std::make_shared<NFA>();
+
+        NFAState *start = nfa->createState();
 
         // TODO: 实现创建基本NFA的逻辑
 
