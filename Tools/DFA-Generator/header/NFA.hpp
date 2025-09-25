@@ -15,6 +15,13 @@ namespace Compiler {
 
     // NFA的状态类
     class NFAState {
+    private:
+        int id;                                     // 状态ID
+        bool finalState;                            // 是否为终结状态
+        std::map<char, std::vector<NFAState*>> transitions;  // 非ε转移
+        std::vector<NFAState*> epsilonTransitions;  // ε转移
+        std::string tokenName;                      // 接受的词法单元名称
+        int priority;                              // 状态优先级
     public:
         NFAState(int id, bool isFinal = false);
         ~NFAState() = default;
@@ -46,14 +53,6 @@ namespace Compiler {
 
         // 设置该状态的优先级
         void setPriority(int priority);
-
-    private:
-        int id;                                     // 状态ID
-        bool finalState;                            // 是否为终结状态
-        std::map<char, std::vector<NFAState*>> transitions;  // 非ε转移
-        std::vector<NFAState*> epsilonTransitions;  // ε转移
-        std::string tokenName;                      // 接受的词法单元名称
-        int priority;                              // 状态优先级
     };
 
     // NFA类

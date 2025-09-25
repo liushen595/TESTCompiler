@@ -22,6 +22,7 @@ namespace Compiler {
     class RegexEngine {
     private:
         std::unordered_map<std::string, std::string> regexrules;
+        std::unordered_map<std::string, std::string> macros;
 
         // 辅助函数：解析正则表达式，将其转换为内部表示
         void preprocessRegex(std::unordered_map<std::string, std::string> &regexrules);
