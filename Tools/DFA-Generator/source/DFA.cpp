@@ -9,7 +9,7 @@
 namespace Compiler {
 
     // DFAState实现
-    DFAState::DFAState(int id, const std::set<NFAState*>& nfaStates)
+    DFAState::DFAState(int id, const std::set<std::shared_ptr<NFAState>>& nfaStates)
         : id(id), finalState(false), nfaStates(nfaStates), priority(0) {
         // 检查是否包含NFA终结状态，如果包含则将该DFA状态设为终结状态
         for (auto nfaState : nfaStates) {
@@ -36,15 +36,15 @@ namespace Compiler {
         finalState = final;
     }
 
-    void DFAState::addTransition(char symbol, DFAState* target) {
+    void DFAState::addTransition(char symbol, std::shared_ptr<DFAState> target) {
         transitions[symbol] = target;
     }
 
-    const std::map<char, DFAState*>& DFAState::getTransitions() const {
+    const std::map<char, std::shared_ptr<DFAState>>& DFAState::getTransitions() const {
         return transitions;
     }
 
-    const std::set<NFAState*>& DFAState::getNFAStates() const {
+    const std::set<std::shared_ptr<NFAState>>& DFAState::getNFAStates() const {
         return nfaStates;
     }
 
@@ -67,15 +67,8 @@ namespace Compiler {
     // DFA实现
     DFA::DFA() : startState(nullptr) {}
 
-    DFA::~DFA() {
-        // 释放所有状态资源
-        for (auto state : states) {
-            delete state;
-        }
-    }
-
-    DFAState* DFA::createState(const std::set<NFAState*>& nfaStates) {
-        DFAState* state = new DFAState(states.size(), nfaStates);
+    std::shared_ptr<DFAState> DFA::createState(const std::set<std::shared_ptr<NFAState>>& nfaStates) {
+        auto state = std::make_shared<DFAState>(states.size(), nfaStates);
         states.push_back(state);
         if (state->isFinalState()) {
             finalStates.push_back(state);
@@ -83,30 +76,30 @@ namespace Compiler {
         return state;
     }
 
-    void DFA::setStartState(DFAState* state) {
+    void DFA::setStartState(std::shared_ptr<DFAState> state) {
         startState = state;
     }
 
-    void DFA::addFinalState(DFAState* state) {
+    void DFA::addFinalState(std::shared_ptr<DFAState> state) {
         if (!state->isFinalState()) {
             state->setFinal(true);
             finalStates.push_back(state);
         }
     }
 
-    const std::vector<DFAState*>& DFA::getAllStates() const {
+    const std::vector<std::shared_ptr<DFAState>>& DFA::getAllStates() const {
         return states;
     }
 
-    DFAState* DFA::getStartState() const {
+    std::shared_ptr<DFAState> DFA::getStartState() const {
         return startState;
     }
 
-    const std::vector<DFAState*>& DFA::getFinalStates() const {
+    const std::vector<std::shared_ptr<DFAState>>& DFA::getFinalStates() const {
         return finalStates;
     }
 
-    DFAState* DFA::findOrCreateState(const std::set<NFAState*>& nfaStates) {
+    std::shared_ptr<DFAState> DFA::findOrCreateState(const std::set<std::shared_ptr<NFAState>>& nfaStates) {
         // 查找或创建等价状态
 
         // TODO: 实现查找或创建等价状态的逻辑
@@ -120,17 +113,17 @@ namespace Compiler {
         // TODO: 实现最小化DFA的逻辑（Hopcroft算法或其他方法）
     }
 
-    std::vector<std::set<DFAState*>> DFA::partitionStates() const {
+    std::vector<std::set<std::shared_ptr<DFAState>>> DFA::partitionStates() const {
         // 划分等价类
 
         // TODO: 实现划分等价类的逻辑
 
-        std::vector<std::set<DFAState*>> result;
+        std::vector<std::set<std::shared_ptr<DFAState>>> result;
         return result;
     }
 
-    bool DFA::areEquivalent(DFAState* state1, DFAState* state2,
-        const std::vector<std::set<DFAState*>>& partition) const {
+    bool DFA::areEquivalent(std::shared_ptr<DFAState> state1, std::shared_ptr<DFAState> state2,
+        const std::vector<std::set<std::shared_ptr<DFAState>>>& partition) const {
         // 检查两个状态是否等价
 
         // TODO: 实现检查状态等价的逻辑

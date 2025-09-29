@@ -205,55 +205,233 @@ namespace Compiler {
         return postfix;
     }
 
+    // 创建基本NFA，接受单个字符
     std::shared_ptr<NFA> RegexEngine::createBasicNFA(char c) {
-        // 创建基本NFA，接受单个字符
         std::shared_ptr<NFA> nfa = std::make_shared<NFA>();
 
-        NFAState *start = nfa->createState();
+        std::shared_ptr<NFAState> start = nfa->createState(false);
+        std::shared_ptr<NFAState> accept = nfa->createState(true);
 
-        // TODO: 实现创建基本NFA的逻辑
+        start->addTransition(c, accept);
+        nfa->setStartState(start);
 
-        return nullptr; // 暂时返回空指针，后续需要实现
+        return nfa;
     }
 
+    // 创建两个NFA的连接
     std::shared_ptr<NFA> RegexEngine::createConcatenation(std::shared_ptr<NFA> first, std::shared_ptr<NFA> second) {
-        // 创建两个NFA的连接
+        // 创建新的nfa
+        std::shared_ptr<NFA> nfa = std::make_shared<NFA>();
 
-        // TODO: 实现NFA连接的逻辑
+        // 复制第一个NFA的状态
+        std::map<std::shared_ptr<NFAState>, std::shared_ptr<NFAState>> first_state_map;
+        for (const auto state : first->getAllStates()) {
+            auto new_state = nfa->createState(false);
+            first_state_map[state] = new_state;
+        }
 
-        return nullptr; // 暂时返回空指针，后续需要实现
+        // 复制第一个NFA的转移
+        for (auto old_state : first->getAllStates()) {
+            auto new_state = first_state_map[old_state];
+
+            // 非ε转移
+            for (auto transiton : old_state->getTransitions()) {
+                char symbol = transiton.first;
+                for (auto target : transiton.second) {
+                    new_state->addTransition(symbol, first_state_map[target]);
+                }
+            }
+
+            // ε转移
+            for (auto target : old_state->getEpsilonTransitions()) {
+                new_state->addEpsilonTransition(first_state_map[target]);
+            }
+        }
+
+        // 获得第二个NFA的开始状态
+        std::shared_ptr<NFAState> second_start = second->getStartState();
+        // 获得开始状态的所有转移并和第一个NFA的终结状态连接
+        for (auto transiton : second_start->getTransitions()) {
+            char symbol = transiton.first;
+            for (auto target : transiton.second) {
+                first_state_map[first->getFinalState()]->addTransition(symbol, target);
+            }
+        }
+
+        std::map<std::shared_ptr<NFAState>, std::shared_ptr<NFAState>> second_state_map;
+        for (const auto state : second->getAllStates()) {
+            auto new_state = nfa->createState(state->isFinalState());
+            second_state_map[state] = new_state;
+        }
+
+        // 复制第二个NFA的转移
+        for (auto old_state : second->getAllStates()) {
+            if (old_state != second_start) {
+                auto new_state = second_state_map[old_state];
+
+                // 非ε转移
+                for (auto transiton : old_state->getTransitions()) {
+                    char symbol = transiton.first;
+                    for (auto target : transiton.second) {
+                        if (target != second_start) {
+                            new_state->addTransition(symbol, second_state_map[target]);
+                        }
+                    }
+                }
+
+                // ε转移
+                for (auto target : old_state->getEpsilonTransitions()) {
+                    if (target != second_start) {
+                        new_state->addEpsilonTransition(second_state_map[target]);
+                    }
+                }
+            }
+        }
+
+        // 获得开始状态的所有转移并和第一个NFA的终结状态连接
+        for (auto transiton : second_start->getTransitions()) {
+            char symbol = transiton.first;
+            for (auto target : transiton.second) {
+                first_state_map[first->getFinalState()]->addTransition(symbol, second_state_map[target]);
+            }
+        }
+
+        nfa->setStartState(first_state_map[first->getStartState()]);
+        nfa->setFinalState(second_state_map[second->getFinalState()]);
+
+        return nfa;
     }
 
+    // 创建两个NFA的选择
     std::shared_ptr<NFA> RegexEngine::createUnion(std::shared_ptr<NFA> first, std::shared_ptr<NFA> second) {
-        // 创建两个NFA的并集
+        std::shared_ptr<NFA> nfa = std::make_shared<NFA>();
 
-        // TODO: 实现NFA并集的逻辑
+        // 创建新的开始和接受状态
+        std::shared_ptr<NFAState> new_start = nfa->createState(false);
+        std::shared_ptr<NFAState> new_accept = nfa->createState(true);
 
-        return nullptr; // 暂时返回空指针，后续需要实现
+        // 复制第一个NFA的状态
+        std::map<std::shared_ptr<NFAState>, std::shared_ptr<NFAState>> first_state_map;
+        for (const auto state : first->getAllStates()) {
+            auto new_state = nfa->createState(false);
+            first_state_map[state] = new_state;
+        }
+
+        // 复制第一个NFA的转移
+        for (auto old_state : first->getAllStates()) {
+            auto new_state = first_state_map[old_state];
+
+            // 非ε转移
+            for (auto transiton : old_state->getTransitions()) {
+                char symbol = transiton.first;
+                for (auto target : transiton.second) {
+                    new_state->addTransition(symbol, first_state_map[target]);
+                }
+            }
+
+            // ε转移
+            for (auto target : old_state->getEpsilonTransitions()) {
+                new_state->addEpsilonTransition(first_state_map[target]);
+            }
+        }
+
+        // 复制第二个NFA的状态
+        std::map<std::shared_ptr<NFAState>, std::shared_ptr<NFAState>> second_state_map;
+        for (const auto state : second->getAllStates()) {
+            auto new_state = nfa->createState(false);
+            second_state_map[state] = new_state;
+        }
+
+        // 复制第二个NFA的转移
+        for (auto old_state : second->getAllStates()) {
+            auto new_state = second_state_map[old_state];
+
+            // 非ε转移
+            for (auto transiton : old_state->getTransitions()) {
+                char symbol = transiton.first;
+                for (auto target : transiton.second) {
+                    new_state->addTransition(symbol, second_state_map[target]);
+                }
+            }
+
+            // ε转移
+            for (auto target : old_state->getEpsilonTransitions()) {
+                new_state->addEpsilonTransition(second_state_map[target]);
+            }
+        }
+
+        // 新的开始状态通过ε转移连接到两个NFA的开始状态
+        new_start->addEpsilonTransition(first_state_map[first->getStartState()]);
+        new_start->addEpsilonTransition(second_state_map[second->getStartState()]);
+
+        // 两个NFA的终结状态通过ε转移连接到新的终结状态
+        first_state_map[first->getFinalState()]->addEpsilonTransition(new_accept);
+        second_state_map[second->getFinalState()]->addEpsilonTransition(new_accept);
+
+        return nfa;
     }
 
+    // 创建NFA的Kleene闭包
     std::shared_ptr<NFA> RegexEngine::createKleeneClosure(std::shared_ptr<NFA> nfa) {
-        // 创建NFA的Kleene闭包
+        std::shared_ptr<NFA> result = std::make_shared<NFA>();
 
-        // TODO: 实现NFA的Kleene闭包逻辑
+        // 创建新的开始和接受状态
+        std::shared_ptr<NFAState> new_start = result->createState(false);
+        std::shared_ptr<NFAState> new_accept = result->createState(true);
 
-        return nullptr; // 暂时返回空指针，后续需要实现
+        // 复制原NFA的状态
+        std::map<std::shared_ptr<NFAState>, std::shared_ptr<NFAState>> state_map;
+        for (const auto state : nfa->getAllStates()) {
+            auto new_state = result->createState(state->isFinalState());
+            state_map[state] = new_state;
+        }
+
+        // 复制原NFA的转移
+        for (auto old_state : nfa->getAllStates()) {
+            auto new_state = state_map[old_state];
+
+            // 非ε转移
+            for (auto transiton : old_state->getTransitions()) {
+                char symbol = transiton.first;
+                for (auto target : transiton.second) {
+                    new_state->addTransition(symbol, state_map[target]);
+                }
+            }
+
+            // ε转移
+            for (auto target : old_state->getEpsilonTransitions()) {
+                new_state->addEpsilonTransition(state_map[target]);
+            }
+        }
+
+        // 新的开始状态通过ε转移连接到原NFA的开始状态和新的接受状态
+        new_start->addEpsilonTransition(state_map[nfa->getStartState()]);
+        new_start->addEpsilonTransition(new_accept);
+
+        // 原NFA的终结状态通过ε转移连接到原NFA的开始状态和新的接受状态
+        state_map[nfa->getFinalState()]->addEpsilonTransition(state_map[nfa->getStartState()]);
+        state_map[nfa->getFinalState()]->addEpsilonTransition(new_accept);
+
+        result->setStartState(new_start);
+        result->setFinalState(new_accept);
+
+        return result;
     }
 
+    // 创建NFA的正闭包
     std::shared_ptr<NFA> RegexEngine::createPositiveClosure(std::shared_ptr<NFA> nfa) {
-        // 创建NFA的正闭包
+        std::shared_ptr<NFA> first = nfa;
+        std::shared_ptr<NFA> second = createKleeneClosure(nfa);
 
-        // TODO: 实现NFA的正闭包逻辑
-
-        return nullptr; // 暂时返回空指针，后续需要实现
+        return createConcatenation(first, second);
     }
 
-    std::shared_ptr<NFA> RegexEngine::createOptional(std::shared_ptr<NFA> nfa) {
-        // 创建NFA的可选项
+    // std::shared_ptr<NFA> RegexEngine::createOptional(std::shared_ptr<NFA> nfa) {
+    //     // 创建NFA的可选项
 
-        // TODO: 实现NFA的可选项逻辑
+    //     // TODO: 实现NFA的可选项逻辑
 
-        return nullptr; // 暂时返回空指针，后续需要实现
-    }
+    //     return nullptr; // 暂时返回空指针，后续需要实现
+    // }
 
 } // namespace Compiler

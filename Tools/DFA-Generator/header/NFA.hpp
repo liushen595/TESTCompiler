@@ -12,14 +12,15 @@ namespace Compiler {
 
     // 前向声明
     class DFA;
+    class NFAState;
 
     // NFA的状态类
-    class NFAState {
+    class NFAState : public std::enable_shared_from_this<NFAState> {
     private:
         int id;                                     // 状态ID
         bool finalState;                            // 是否为终结状态
-        std::map<char, std::vector<NFAState*>> transitions;  // 非ε转移
-        std::vector<NFAState*> epsilonTransitions;  // ε转移
+        std::map<char, std::vector<std::shared_ptr<NFAState>>> transitions;  // 非ε转移
+        std::vector<std::shared_ptr<NFAState>> epsilonTransitions;  // ε转移
         std::string tokenName;                      // 接受的词法单元名称
         int priority;                              // 状态优先级
     public:
@@ -31,16 +32,16 @@ namespace Compiler {
         void setFinal(bool final);
 
         // 添加一个转移
-        void addTransition(char symbol, NFAState* target);
+        void addTransition(char symbol, std::shared_ptr<NFAState> target);
 
         // 添加一个ε转移
-        void addEpsilonTransition(NFAState* target);
+        void addEpsilonTransition(std::shared_ptr<NFAState> target);
 
         // 获取所有可能的转移
-        const std::map<char, std::vector<NFAState*>>& getTransitions() const;
+        const std::map<char, std::vector<std::shared_ptr<NFAState>>>& getTransitions() const;
 
         // 获取所有ε转移
-        const std::vector<NFAState*>& getEpsilonTransitions() const;
+        const std::vector<std::shared_ptr<NFAState>>& getEpsilonTransitions() const;
 
         // 获取该状态接受的词法单元名称
         const std::string& getTokenName() const;
@@ -58,37 +59,37 @@ namespace Compiler {
     // NFA类
     class NFA {
     private:
-        std::vector<NFAState*> states;         // 所有状态
-        NFAState* startState;                  // 初始状态
-        std::vector<NFAState*> finalStates;    // 终结状态集合
+        std::vector<std::shared_ptr<NFAState>> states;         // 所有状态
+        std::shared_ptr<NFAState> startState;                  // 初始状态
+        std::shared_ptr<NFAState> finalState;                 // 终结状态
     public:
         NFA();
-        ~NFA();
+        ~NFA() = default; // 使用智能指针，无需手动释放内存
 
         // 创建一个新状态
-        NFAState* createState(bool isFinal = false);
+        std::shared_ptr<NFAState> createState(bool isFinal = false);
 
         // 设置初始状态
-        void setStartState(NFAState* state);
+        void setStartState(std::shared_ptr<NFAState> state);
 
-        // 添加一个终结状态
-        void addFinalState(NFAState* state);
+        // 设置终结状态
+        void setFinalState(std::shared_ptr<NFAState> state);
 
         // 获取所有状态
-        const std::vector<NFAState*>& getAllStates() const;
+        const std::vector<std::shared_ptr<NFAState>>& getAllStates() const;
 
         // 获取初始状态
-        NFAState* getStartState() const;
+        std::shared_ptr<NFAState> getStartState() const;
 
-        // 获取所有终结状态
-        const std::vector<NFAState*>& getFinalStates() const;
+        // 获取终结状态
+        std::shared_ptr<NFAState> getFinalState() const;
 
         // 计算状态的ε闭包
-        std::set<NFAState*> epsilonClosure(NFAState* state) const;
-        std::set<NFAState*> epsilonClosure(const std::set<NFAState*>& states) const;
+        std::set<std::shared_ptr<NFAState>> epsilonClosure(std::shared_ptr<NFAState> state) const;
+        std::set<std::shared_ptr<NFAState>> epsilonClosure(const std::set<std::shared_ptr<NFAState>>& states) const;
 
         // 计算状态集合的转移
-        std::set<NFAState*> move(const std::set<NFAState*>& states, char symbol) const;
+        std::set<std::shared_ptr<NFAState>> move(const std::set<std::shared_ptr<NFAState>>& states, char symbol) const;
 
         // 使用子集构造法将NFA转换为DFA
         std::shared_ptr<DFA> toDFA() const;

@@ -22,7 +22,7 @@ namespace Compiler {
     class RegexEngine {
     private:
         std::unordered_map<std::string, std::string> regexrules;
-        std::unordered_map<std::string, std::string> macros;
+        // std::unordered_map<std::string, std::string> macros;
 
         // 辅助函数：解析正则表达式，将其转换为内部表示
         void preprocessRegex(std::unordered_map<std::string, std::string> &regexrules);
@@ -39,7 +39,7 @@ namespace Compiler {
         std::shared_ptr<NFA> createUnion(std::shared_ptr<NFA> first, std::shared_ptr<NFA> second);
         std::shared_ptr<NFA> createKleeneClosure(std::shared_ptr<NFA> nfa);
         std::shared_ptr<NFA> createPositiveClosure(std::shared_ptr<NFA> nfa);
-        std::shared_ptr<NFA> createOptional(std::shared_ptr<NFA> nfa);
+        // std::shared_ptr<NFA> createOptional(std::shared_ptr<NFA> nfa);
     public:
         RegexEngine() = default;
         ~RegexEngine() = default;

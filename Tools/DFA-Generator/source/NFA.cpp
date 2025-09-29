@@ -21,19 +21,19 @@ namespace Compiler {
         finalState = final;
     }
 
-    void NFAState::addTransition(char symbol, NFAState* target) {
+    void NFAState::addTransition(char symbol, std::shared_ptr<NFAState> target) {
         transitions[symbol].push_back(target);
     }
 
-    void NFAState::addEpsilonTransition(NFAState* target) {
+    void NFAState::addEpsilonTransition(std::shared_ptr<NFAState> target) {
         epsilonTransitions.push_back(target);
     }
 
-    const std::map<char, std::vector<NFAState*>>& NFAState::getTransitions() const {
+    const std::map<char, std::vector<std::shared_ptr<NFAState>>>& NFAState::getTransitions() const {
         return transitions;
     }
 
-    const std::vector<NFAState*>& NFAState::getEpsilonTransitions() const {
+    const std::vector<std::shared_ptr<NFAState>>& NFAState::getEpsilonTransitions() const {
         return epsilonTransitions;
     }
 
@@ -56,73 +56,66 @@ namespace Compiler {
     // NFA实现
     NFA::NFA() : startState(nullptr) {}
 
-    NFA::~NFA() {
-        // 释放所有状态资源
-        for (auto state : states) {
-            delete state;
-        }
-    }
-
-    NFAState* NFA::createState(bool isFinal) {
-        NFAState* state = new NFAState(states.size(), isFinal);
+    std::shared_ptr<NFAState> NFA::createState(bool isFinal) {
+        auto state = std::make_shared<NFAState>(states.size(), isFinal);
         states.push_back(state);
         if (isFinal) {
-            finalStates.push_back(state);
+            finalState = state;
         }
         return state;
     }
 
-    void NFA::setStartState(NFAState* state) {
+    void NFA::setStartState(std::shared_ptr<NFAState> state) {
         startState = state;
     }
 
-    void NFA::addFinalState(NFAState* state) {
+    void NFA::setFinalState(std::shared_ptr<NFAState> state) {
         if (!state->isFinalState()) {
             state->setFinal(true);
-            finalStates.push_back(state);
+            finalState = state;
         }
     }
 
-    const std::vector<NFAState*>& NFA::getAllStates() const {
+    const std::vector<std::shared_ptr<NFAState>>& NFA::getAllStates() const {
         return states;
     }
 
-    NFAState* NFA::getStartState() const {
+    std::shared_ptr<NFAState> NFA::getStartState() const {
         return startState;
     }
 
-    const std::vector<NFAState*>& NFA::getFinalStates() const {
-        return finalStates;
+    std::shared_ptr<NFAState> NFA::getFinalState() const {
+        return finalState;
     }
 
-    std::set<NFAState*> NFA::epsilonClosure(NFAState* state) const {
+    std::set<std::shared_ptr<NFAState>> NFA::epsilonClosure(std::shared_ptr<NFAState> state) const {
         // 计算单个状态的ε闭包
 
         // TODO: 实现计算ε闭包的逻辑
 
-        std::set<NFAState*> result;
+        std::set<std::shared_ptr<NFAState>> result;
         // 暂时只添加当前状态，后续需要实现
         result.insert(state);
         return result;
     }
 
-    std::set<NFAState*> NFA::epsilonClosure(const std::set<NFAState*>& states) const {
+    std::set<std::shared_ptr<NFAState>> NFA::epsilonClosure(const std::set<std::shared_ptr<NFAState>>& states) const {
         // 计算状态集合的ε闭包
 
         // TODO: 实现计算状态集合ε闭包的逻辑
 
-        std::set<NFAState*> result;
+        std::set<std::shared_ptr<NFAState>> result;
         // 暂时只添加当前状态集合，后续需要实现
         result.insert(states.begin(), states.end());
         return result;
     }
 
-    std::set<NFAState*> NFA::move(const std::set<NFAState*>& states, char symbol) const {
+    std::set<std::shared_ptr<NFAState>> NFA::move(const std::set<std::shared_ptr<NFAState>>& states, char symbol) const {
         // 计算状态集合的转移
 
         // TODO: 实现计算状态集合转移的逻辑
 
-        std::set<NFAState*> result;
+        std::set<std::shared_ptr<NFAState>> result;
         return result;
     }
 
