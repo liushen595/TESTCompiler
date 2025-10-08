@@ -21,17 +21,25 @@ namespace Compiler {
     // 正则表达式引擎类，负责解析正则表达式并生成NFA
     class RegexEngine {
     private:
-        std::unordered_map<std::string, std::string> regexrules;
+        std::map<std::string, std::string> regexrules;  // tokenName -> regex pattern
+        std::map<std::string, std::shared_ptr<NFA>> nfa_map;  // 每个token对应的NFA
+        std::map<std::string, int> tokenPriorities;  // token优先级映射
         // std::unordered_map<std::string, std::string> macros;
 
         // 辅助函数：解析正则表达式，将其转换为内部表示
-        void preprocessRegex(std::unordered_map<std::string, std::string> &regexrules);
+        void preprocessRegex(std::map<std::string, std::string> &regexrules);
+
+        // 添加显式连接符
+        std::string addExplicitConcatenation(const std::string& regex);
+
+        // 判断字符是否为操作符
+        bool isOperator(char c, char c_pre) const;
 
         // 辅助函数：将中缀表达式转换为后缀表达式
         std::string infixToPostfix(const std::string& regex);
 
         // 使用MYT算法将正则表达式转换为NFA
-        std::shared_ptr<NFA> regexToNFA(std::unordered_map<std::string, std::string> &regexrules);
+        void regexToNFA(std::map<std::string, std::string> &regexrules);
 
         // 实现MYT算法的各个函数
         std::shared_ptr<NFA> createBasicNFA(char c);
@@ -48,7 +56,7 @@ namespace Compiler {
         bool loadRulesFromFile(const std::string& filePath);
 
         // 获取已加载的规则列表
-        const std::unordered_map<std::string, std::string>& getRules() const;
+        const std::map<std::string, std::string>& getRules() const;
 
         // 将所有规则合并成一个大的NFA
         std::shared_ptr<NFA> buildCombinedNFA();
