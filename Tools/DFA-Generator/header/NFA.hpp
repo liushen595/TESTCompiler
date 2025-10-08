@@ -7,27 +7,29 @@
 #include <string>
 #include <memory>
 #include <unordered_map>
+#include <stack>
 
 namespace Compiler {
 
     // 前向声明
     class DFA;
+    class DFAState;
     class NFAState;
 
     // NFA的状态类
     class NFAState : public std::enable_shared_from_this<NFAState> {
     private:
-        int id;                                     // 状态ID
+        size_t id;                                  // 状态ID (使用size_t避免转换警告)
         bool finalState;                            // 是否为终结状态
         std::map<char, std::vector<std::shared_ptr<NFAState>>> transitions;  // 非ε转移
         std::vector<std::shared_ptr<NFAState>> epsilonTransitions;  // ε转移
         std::string tokenName;                      // 接受的词法单元名称
         int priority;                              // 状态优先级
     public:
-        NFAState(int id, bool isFinal = false);
+        NFAState(size_t id, bool isFinal = false);
         ~NFAState() = default;
 
-        int getId() const;
+        size_t getId() const;
         bool isFinalState() const;
         void setFinal(bool final);
 
@@ -62,6 +64,10 @@ namespace Compiler {
         std::vector<std::shared_ptr<NFAState>> states;         // 所有状态
         std::shared_ptr<NFAState> startState;                  // 初始状态
         std::shared_ptr<NFAState> finalState;                 // 终结状态
+
+        // 辅助函数:为DFA状态设置token信息
+        void setDFAStateTokenInfo(std::shared_ptr<DFAState> dfaState,
+            const std::set<std::shared_ptr<NFAState>>& nfaStates) const;
     public:
         NFA();
         ~NFA() = default; // 使用智能指针，无需手动释放内存
