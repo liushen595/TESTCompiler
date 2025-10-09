@@ -1,6 +1,8 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <iomanip>
+#include <map>
 
 // 引入词法分析器头文件
 #ifdef LEXER_ENABLED
@@ -8,7 +10,7 @@
 #endif
 
 int main(int argc, char* argv[]) {
-    std::cout << "TESTCompiler - 编译原理课程编译器" << std::endl;
+    std::cout << "TESTCompiler - 编译器" << std::endl;
 
     if (argc < 2) {
         std::cout << "使用方法: " << argv[0] << " <输入文件>" << std::endl;
@@ -36,11 +38,40 @@ int main(int argc, char* argv[]) {
     std::cout << "文件内容读取成功，大小: " << content.size() << " 字节" << std::endl;
 
 #ifdef LEXER_ENABLED
-    // TODO: 词法分析
-    std::cout << "开始词法分析..." << std::endl;
-    // Lexer lexer(content);
-    // auto tokens = lexer.tokenize();
-    std::cout << "词法分析完成" << std::endl;
+    // 生成输出文件路径（与输入文件同目录，添加.tokens后缀）
+    std::string outputFile = inputFile + ".tokens";
+    std::ofstream lexOut(outputFile);
+
+    if (!lexOut.is_open()) {
+        std::cerr << "错误: 无法创建输出文件 " << outputFile << std::endl;
+        return 1;
+    }
+
+    try {
+        // 词法分析
+        std::cout << "\n" << std::string(60, '=') << std::endl;
+        std::cout << "开始词法分析..." << std::endl;
+        std::cout << std::string(60, '=') << std::endl;
+
+        Compiler::Lexer lexer(content);
+        std::vector<Compiler::Token> tokens = lexer.tokenize();
+
+        std::cout << "\n词法分析完成！共识别 " << tokens.size() << " 个词法单元\n" << std::endl;
+
+        // 输出词法分析结果到文件
+        outputLexerResults(tokens, lexOut);
+        lexOut.close();
+
+        std::cout << "词法分析结果已保存到: " << outputFile << std::endl;
+    }
+    catch (const Compiler::LexerException &ex) {
+        std::cerr << ex.getFullMessage() << std::endl;
+        std::cerr << "Compilation terminated due to lex errors." << std::endl;
+        // 清空输出文件内容
+        outputLexerResults({}, lexOut);
+        lexOut.close();
+        return 1;
+    }
 #endif
 
 #ifdef PARSER_ENABLED

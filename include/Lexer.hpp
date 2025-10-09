@@ -1,8 +1,12 @@
 #pragma once
 
+#ifndef LEXER_HPP
+#define LEXER_HPP
+
 #include <string>
 #include <vector>
 #include <memory>
+#include <iostream>
 
 namespace Compiler {
 
@@ -11,24 +15,23 @@ namespace Compiler {
         // 基本令牌类型
         IDENTIFIER,     // 标识符
         NUMBER,         // 数字
-        STRING,         // 字符串字面量
         KEYWORD,        // 关键字
-        OPERATOR,       // 操作符
-        DELIMITER,      // 分隔符
-        WHITESPACE,     // 空白字符
-        COMMENT,        // 注释
-        NEWLINE,        // 换行
-        EOF_TOKEN,      // 文件结束
+        COMPARISON_DOUBLE, // 双字符比较操作符
+        COMPARISON_SINGLE, // 单字符比较操作符
+        DIVISION,       // 除号
+        COMMENT_FIRST,  // 注释开始
+        COMMENT_LAST,   // 注释结束
+        SINGLEWORD,    // 单字符符
         UNKNOWN         // 未知令牌
     };
 
     // 令牌结构
     struct Token {
-        TokenType type;
-        std::string value;
-        std::size_t line;
-        std::size_t column;
-        std::size_t position;
+        TokenType type; // 令牌类型
+        std::string value; // 令牌值
+        std::size_t line;   // 行号
+        std::size_t column; // 列号
+        std::size_t position; // 在输入中的位置
 
         Token(TokenType t, const std::string& v, std::size_t l, std::size_t c, std::size_t p)
             : type(t), value(v), line(l), column(c), position(p) {}
@@ -48,10 +51,9 @@ namespace Compiler {
         void skipWhitespace();
         void skipComment();
 
-        Token readIdentifier();
-        Token readNumber();
-        Token readString();
-        Token readOperator();
+        // DFA 驱动的词法分析
+        Token runDFA();
+        TokenType mapTokenName(const std::string& tokenName);
 
     public:
         explicit Lexer(const std::string& input);
@@ -77,4 +79,33 @@ namespace Compiler {
     // 检查是否为关键字
     bool isKeyword(const std::string& identifier);
 
+    // 词法分析异常类
+    class LexerException : public std::exception {
+    private:
+        std::string message_;
+        std::size_t line_;
+        std::size_t column_;
+
+    public:
+        LexerException(const std::string& message, std::size_t line, std::size_t column)
+            : message_(message), line_(line), column_(column) {}
+
+        const char* what() const noexcept override {
+            return message_.c_str();
+        }
+
+        std::size_t getLine() const { return line_; }
+        std::size_t getColumn() const { return column_; }
+
+        std::string getFullMessage() const {
+            return "LexError (in line:" + std::to_string(line_) +
+                ", in column:" + std::to_string(column_) + "): " + message_;
+        }
+    };
 } // namespace Compiler
+
+// 输出词法分析结果，格式适合语法分析器使用
+// 输出格式: <TokenType, TokenValue, Line, Column>
+void outputLexerResults(const std::vector<Compiler::Token>& tokens, std::ostream& out = std::cout);
+
+#endif // LEXER_HPP
