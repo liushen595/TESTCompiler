@@ -60,6 +60,7 @@ void print_nfa(std::shared_ptr<Compiler::NFA> nfa) {
             std::cout << "      --ε--> " << target->getId() << std::endl;
         }
     }
+    std::cout << "NFA print done. Ready to construct DFA. " << std::endl;
     std::cout << std::endl;
 }
 

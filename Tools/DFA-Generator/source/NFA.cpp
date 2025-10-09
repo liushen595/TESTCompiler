@@ -311,7 +311,7 @@ namespace Compiler {
                 }
                 else {
                     newDFAState = stateMap[closureResult];
-                    // std::cout << " (existing state " << newDFAState->getId() << ")";
+                    // std::cout << " (existing state " << newDFAState->getId() << ")" << std::endl;
                 }
                 // std::cout << std::endl;
 
