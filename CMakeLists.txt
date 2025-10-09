@@ -78,6 +78,9 @@ file(GLOB_RECURSE COMPILER_HEADERS
 add_executable(TESTCompiler ${COMPILER_SOURCES})
 target_include_directories(TESTCompiler PRIVATE include build/generated)
 
+# 添加宏定义
+target_compile_definitions(TESTCompiler PRIVATE LEXER_ENABLED)
+
 # 选项：是否编译工具
 option(BUILD_TOOLS "Build DFA Generator and Parser Generator tools" ON)
 option(BUILD_DFA_GENERATOR "Build DFA Generator tool" ON)
@@ -92,8 +95,8 @@ if(BUILD_TOOLS OR BUILD_PARSER_GENERATOR)
     add_subdirectory("Tools/Parser-Generator")
 endif()
 
-# 选项：是否编译测试
-option(BUILD_TESTS "Build test programs" ON)
+# 选项：是否编译测试（默认关闭）
+option(BUILD_TESTS "Build test programs" OFF)
 
 if(BUILD_TESTS)
     enable_testing()
