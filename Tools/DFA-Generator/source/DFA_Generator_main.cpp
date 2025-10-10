@@ -11,8 +11,8 @@ int main(/*int argc, char* argv[]*/) {
     //     return 1;
     // }
 
-    std::string rulesFile = "input/lex_rules.txt";
-    std::string outputFile = "build/generated/DFA_Tables.hpp";
+    std::string rulesFile = "../lex_rules.txt";
+    std::string outputFile = "../Generated/DFA_Tables.hpp";
 
     // 创建正则表达式引擎
     Compiler::RegexEngine regexEngine;
