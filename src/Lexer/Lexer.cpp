@@ -257,9 +257,7 @@ namespace Compiler {
             }
         }
         catch (const LexerException& ex) {
-            // 捕获词法分析异常，输出错误信息
-            std::cerr << ex.getFullMessage() << std::endl;
-            throw; // 重新抛出异常以便上层处理
+            throw ex; // 重新抛出异常以便上层处理
         }
 
         return tokens;
@@ -271,7 +269,7 @@ namespace Compiler {
 void outputLexerResults(const std::vector<Compiler::Token>& tokens, std::ostream& out) {
     // 输出文件头注释
     out << "# 词法分析结果" << std::endl;
-    out << "# 格式: <TokenType, TokenValue, Line, Column>" << std::endl;
+    out << "# 格式: TokenType TokenValue Line Column" << std::endl;
     out << "# 总计: " << tokens.size() << " 个词法单元" << std::endl;
     out << std::endl;
 
@@ -319,9 +317,9 @@ void outputLexerResults(const std::vector<Compiler::Token>& tokens, std::ostream
             valueStr = "\"" + escaped + "\"";
         }
 
-        // 输出格式：<类型, 值, 行号, 列号>
-        out << "<" << typeStr << ", " << valueStr << ", "
-            << token.line << ", " << token.column << ">" << std::endl;
+        // 输出格式：类型 值 行号 列号
+        out << typeStr << " " << valueStr << " "
+            << token.line << " " << token.column << std::endl;
     }
 
     out << std::endl;

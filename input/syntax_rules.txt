@@ -1,0 +1,19 @@
+<program>                       { <declaration_list><statement_list> }
+<declaration_list>              <declaration_list><declaration_stat> | 𝜀
+<declaration_stat>              int ID;
+<statement_list>                <statement_list><statement> | 𝜀
+<statement>                     <if_stat> | <while_stat> | <for_stat> | <read_stat> | <write_stat> | <compound_stat> | <expression_stat>
+<if_stat>                       if(<expression>) <statement> [else <statement>]
+<while_stat>                    while(<expression>) <statement>
+<for_stat>                      for(<expression>;<expression>;<expression>) <statement>
+<write_stat>                    write <expression>;
+<read_stat>                     read ID;
+<compound_stat>                 {<statement_list>}
+<expression_stat>               <expression>; | ;
+<expression>                    ID=<bool_expr> | <bool_expr>
+<bool_expr>                     <additive_expr> | <additive_expr>(>|<|>=|<=|==|!=)<additive_expr>
+<additive_expr>                 <term>{(+|-)<term>}
+<term>                          <factor>{(*|/)<factor>}
+<factor>                        (<expression>) | ID | NUM
+其中,规则(1)和规则(11)中的符号“{”和“}”为终结符号,不是元符号,而规
+则(6)-(8)和(17)中出现的符号“(”和“)”也是终结符号,不是元符号。
