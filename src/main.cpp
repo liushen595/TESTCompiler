@@ -9,6 +9,10 @@
 #include "Lexer.hpp"
 #endif
 
+#ifdef PARSER_ENABLED
+#include "Parser.hpp"
+#endif
+
 int main(int argc, char* argv[]) {
     std::cout << "TESTCompiler - 编译器" << std::endl;
 
@@ -65,7 +69,8 @@ int main(int argc, char* argv[]) {
         std::cout << "词法分析结果已保存到: " << outputFile << std::endl;
     }
     catch (const Compiler::LexerException &ex) {
-        std::cerr << ex.getFullMessage() << std::endl;
+        // 捕获词法分析异常，输出错误信息
+        std::cerr << "\033[31m" << ex.getFullMessage() << "\033[0m" << std::endl;
         std::cerr << "Compilation terminated due to lex errors." << std::endl;
         // 清空输出文件内容
         outputLexerResults({}, lexOut);
@@ -76,8 +81,18 @@ int main(int argc, char* argv[]) {
 
 #ifdef PARSER_ENABLED
     // TODO: 语法分析
-    std::cout << "开始语法分析..." << std::endl;
-    std::cout << "语法分析完成" << std::endl;
+    try {
+        std::cout << "开始语法分析..." << std::endl;
+        std::string tokenFile = inputFile + ".tokens";
+        Compiler::Parser parser(tokenFile);
+        parser.parse();
+        std::cout << "语法分析完成" << std::endl;
+    }
+    catch (const Compiler::ParseException &ex) {
+        std::cerr << "\033[31m" << ex.getFullMessage() << "\033[0m" << std::endl;
+        std::cerr << "Compilation terminated due to parse errors." << std::endl;
+        return 1;
+    }
 #endif
 
     std::cout << "编译完成" << std::endl;

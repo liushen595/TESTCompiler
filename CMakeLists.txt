@@ -80,6 +80,7 @@ target_include_directories(TESTCompiler PRIVATE include build/generated)
 
 # 添加宏定义
 target_compile_definitions(TESTCompiler PRIVATE LEXER_ENABLED)
+target_compile_definitions(TESTCompiler PRIVATE PARSER_ENABLED)
 
 # 选项：是否编译工具
 option(BUILD_TOOLS "Build DFA Generator and Parser Generator tools" ON)
