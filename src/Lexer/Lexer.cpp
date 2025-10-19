@@ -257,9 +257,7 @@ namespace Compiler {
             }
         }
         catch (const LexerException& ex) {
-            // 捕获词法分析异常，输出错误信息
-            std::cerr << ex.getFullMessage() << std::endl;
-            throw; // 重新抛出异常以便上层处理
+            throw ex; // 重新抛出异常以便上层处理
         }
 
         return tokens;
