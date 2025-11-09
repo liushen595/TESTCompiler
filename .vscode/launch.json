@@ -8,6 +8,7 @@
             "program": "${command:cmake.launchTargetPath}",
             "args": [
                 "${file}",
+                "${workspaceFolder}/build/generated/LL1_Table.hpp",
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
