@@ -7,6 +7,7 @@
 #include <vector>
 #include <fstream>
 #include <iostream>
+#include <memory>
 #include "Lexer.hpp"
 
 namespace Compiler {
@@ -38,25 +39,26 @@ namespace Compiler {
     // 语法分析器类
     class Parser {
     private:
-        std::vector<Token> tokens_; // 令牌流
-        std::size_t currentIndex_; // 当前token索引
+        std::shared_ptr<Lexer> lexer_; // 词法分析器智能指针
         Token currentToken_; // 当前token
-        std::string tokenFilePath_; // Token文件路径
-
-        // 从token文件读取tokens
-        bool loadTokensFromFile(const std::string& tokenFile);
 
         // 获取下一个token
         void advance();
 
-        // 获取当前token的值
-        // std::string getCurrentTokenValue() const;
-
         // 检查当前token是否匹配期望的值
         bool match(const std::string& expected);
 
+        // 检查当前token类型是否匹配期望的类型
+        bool match(TokenType expectedType);
+
         // 消费一个期望的token
         void consume(const std::string& expected);
+
+        // 消费一个期望类型的token
+        void consume(TokenType expectedType);
+
+        // 获取当前token
+        const Token& getCurrentToken() const;
 
         // 获取当前token位置信息
         std::size_t getCurrentLine() const;
@@ -66,6 +68,7 @@ namespace Compiler {
         void throwParseError(const std::string& message);
 
         // 语法分析函数 - 对应每条语法规则
+        // 注意：这些方法现在是预留的，您将用LL分析器替换它们
         // <program> → <declaration_list> <statement_list>
         void program();
         // <declaration_list> → <declaration_list> <declaration_stat> | ε
@@ -102,11 +105,11 @@ namespace Compiler {
         void factor();
 
     public:
-        // 构造函数 - 接受token文件路径
-        Parser(const std::string& tokenFile);
+        // 构造函数 - 接受词法分析器智能指针
+        Parser(std::shared_ptr<Lexer> lexer);
 
-        // 构造函数 - 接受token向量
-        Parser(const std::vector<Token>& tokens);
+        // 构造函数 - 从输入字符串创建
+        Parser(const std::string& input);
 
         // 执行语法分析
         void parse();
