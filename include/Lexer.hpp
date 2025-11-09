@@ -21,7 +21,8 @@ namespace Compiler {
         DIVISION,       // 除号
         COMMENT_FIRST,  // 注释开始
         COMMENT_LAST,   // 注释结束
-        SINGLEWORD,    // 单字符符
+        SINGLEWORD,    // 单字符符号
+        EOF_TOKEN,      // 文件结束
         UNKNOWN         // 未知令牌
     };
 
@@ -56,10 +57,16 @@ namespace Compiler {
         TokenType mapTokenName(const std::string& tokenName);
 
     public:
-        explicit Lexer(const std::string& input);
+        Lexer(const std::string& input);
 
         // 获取下一个令牌
         Token nextToken();
+
+        // 查看下一个令牌但不消费它
+        Token peekToken();
+
+        // 检查是否到达输入结尾
+        bool isAtEnd() const;
 
         // 令牌化整个输入
         std::vector<Token> tokenize();
