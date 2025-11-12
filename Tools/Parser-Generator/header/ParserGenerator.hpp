@@ -18,10 +18,6 @@ namespace Compiler {
 
         bool initialized;
         bool tableBuilt;
-
-        // 预处理语法规则（展开可选项等）
-        void preprocessGrammar();
-
     public:
         ParserGenerator();
         ParserGenerator(const std::string& inputFile, const std::string& outputFile);
@@ -37,9 +33,6 @@ namespace Compiler {
 
         // 导出分析表
         void exportTable(const std::string& filename);
-
-        // 生成C++头文件
-        void generateHeaderFile(const std::string& filename);
 
         // 运行完整流程
         void run();

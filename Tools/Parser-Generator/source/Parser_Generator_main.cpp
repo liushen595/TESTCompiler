@@ -12,7 +12,6 @@ void printUsage(const char* programName) {
     std::cout << "\nNotes:" << std::endl;
     std::cout << "  - Input file: text file containing LL(1) grammar rules" << std::endl;
     std::cout << "  - Output file: generated LL(1) parsing table file" << std::endl;
-    std::cout << "  - A corresponding .hpp header file will also be generated for compiler use" << std::endl;
 }
 
 int main(int argc, char* argv[]) {
@@ -50,12 +49,10 @@ int main(int argc, char* argv[]) {
         std::cout << "   Generation successful!" << std::endl;
         std::cout << "========================================" << std::endl;
         std::cout << "Generated files:" << std::endl;
-        std::cout << "  - " << outputFile << " (parsing table data)" << std::endl;
-        std::cout << "  - " << outputFile << ".hpp (C++ header file)" << std::endl;
-
+        std::cout << "  - " << outputFile << std::endl;
     }
     catch (const PaserGeneratorException& e) {
-        std::cerr << "\n" << e.getFullMessage() << std::endl;
+        std::cerr << "\n\033[31m" << e.getFullMessage() << "\033[0m" << std::endl;
         return 1;
     }
     catch (const std::exception& e) {

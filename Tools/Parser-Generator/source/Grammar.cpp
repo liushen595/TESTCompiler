@@ -40,7 +40,7 @@ namespace Compiler {
         case SymbolType::TERMINAL:
             return "\"" + name + "\"";
         case SymbolType::NON_TERMINAL:
-            return "<" + name + ">";
+            return name;
         case SymbolType::EPSILON:
             return "ε";
         default:
@@ -80,29 +80,29 @@ namespace Compiler {
     void Grammar::loadFromFile(const std::string& filename) {
         std::ifstream file(filename);
         if (!file.is_open()) {
-            throw PaserGeneratorException("\033[31mFailed to open file: " + filename + "\033[0m");
+            throw PaserGeneratorException("Failed to open file: " + filename);
         }
 
         std::string line;
-        int index = 0;
+        // 移除这里的 index，改为在 parseGrammarLine 中使用 productions.size()
         while (std::getline(file, line)) {
-            parseGrammarLine(line, index++);
+            parseGrammarLine(line); // 传入的 index 参数将不再使用
         }
 
         if (productions.empty()) {
-            throw PaserGeneratorException("\033[31mNo productions found in grammar file\033[0m");
+            throw PaserGeneratorException("No productions found in grammar file");
         }
 
         startSymbol = productions[0].left; // Assume the left-hand side of the first production is the start symbol
     }
 
-    void Grammar::parseGrammarLine(const std::string& line, int index) {
+    void Grammar::parseGrammarLine(const std::string& line) {
         Production production;
         std::vector<Symbol> rightSide;
         std::stringstream ss(line);
         std::string left, right;
         if (!(ss >> left)) {
-            throw PaserGeneratorException("\033[31mEncountered error while parsing grammar line.\033[0m");
+            throw PaserGeneratorException("Encountered error while parsing grammar line.");
         }
 
         // 解析左部非终结符
@@ -119,7 +119,9 @@ namespace Compiler {
                 }
                 else if (right[0] == '|') {
                     // 分隔符，保存当前产生式，开始新产生式
-                    productions.push_back(Production(leftSymbol, rightSide, index++));
+                    // 使用 productions.size() 作为索引，确保索引与向量位置一致
+                    int currentIndex = static_cast<int>(productions.size());
+                    productions.push_back(Production(leftSymbol, rightSide, currentIndex));
                     rightSide.clear();
                 }
                 else if (right == "ε") {
@@ -135,22 +137,16 @@ namespace Compiler {
             }
             // 保存最后一个产生式
             if (!rightSide.empty()) {
-                productions.push_back(Production(leftSymbol, rightSide, index++));
+                int currentIndex = static_cast<int>(productions.size());
+                productions.push_back(Production(leftSymbol, rightSide, currentIndex));
             }
         }
         catch (...) {
-            throw PaserGeneratorException("\033[31mEncountered error while parsing grammar line.\033[0m");
+            throw PaserGeneratorException("Encountered error while parsing grammar line.");
         }
     }
 
     void Grammar::computeFirstSets() {
-        // TODO: 计算所有非终结符的FIRST集
-        // 算法步骤：
-        // 1. 初始化所有FIRST集为空
-        // 2. 对每个产生式 A -> α：
-        //    - 将FIRST(α)加入FIRST(A)
-        // 3. 重复直到不再变化
-
         for (const auto &nt : nonTerminals) {
             firstSets[nt] = std::set<Symbol>();
         }
@@ -171,14 +167,6 @@ namespace Compiler {
     }
 
     std::set<Symbol> Grammar::computeFirst(const std::vector<Symbol>& symbols) const {
-        // TODO: 计算符号串的FIRST集
-        // 算法步骤：
-        // 1. 如果第一个符号是终结符，返回{该终结符}
-        // 2. 如果第一个符号是非终结符：
-        //    - 将其FIRST集（除ε外）加入结果
-        //    - 如果包含ε，继续处理下一个符号
-        // 3. 如果所有符号都能推出ε，将ε加入结果
-
         std::set<Symbol> result;
 
         if (symbols.empty() || symbols[0].isEpsilon()) {
@@ -195,7 +183,6 @@ namespace Compiler {
             // 非终结符, 添加其 FIRST 集（除 ε）
             auto it = firstSets.find(symbols[i]);
             if (it == firstSets.end()) {
-                // 如果找不到该非终结符的 FIRST 集，跳过
                 break;
             }
             const auto& firstSet = it->second;
@@ -220,13 +207,6 @@ namespace Compiler {
     }
 
     void Grammar::computeFollowSets() {
-        // TODO: 计算所有非终结符的FOLLOW集
-        // 算法步骤：
-        // 1. 将$加入开始符号的FOLLOW集
-        // 2. 对每个产生式 A -> αBβ：
-        //    - 将FIRST(β)（除ε外）加入FOLLOW(B)
-        //    - 如果β能推出ε，将FOLLOW(A)加入FOLLOW(B)
-        // 3. 重复直到不再变化
         for (const auto &nt : nonTerminals) {
             followSets[nt] = std::set<Symbol>();
         }
@@ -322,23 +302,29 @@ namespace Compiler {
 
     void Grammar::printFirstSets() const {
         std::cout << "\n========== FIRST Sets ==========" << std::endl;
-        for (const auto& pair : firstSets) {
-            std::cout << "FIRST(" << pair.first.toString() << ") = { ";
-            for (const auto& sym : pair.second) {
-                std::cout << sym.toString() << " ";
+        for (const auto& prod : productions) {
+            const Symbol& nonTerminal = prod.left;
+            if (firstSets.find(nonTerminal) != firstSets.end()) {
+                std::cout << "FIRST(" << nonTerminal.toString() << ") = { ";
+                for (const auto& sym : firstSets.at(nonTerminal)) {
+                    std::cout << sym.toString() << " ";
+                }
+                std::cout << "}" << std::endl;
             }
-            std::cout << "}" << std::endl;
         }
     }
 
     void Grammar::printFollowSets() const {
         std::cout << "\n========== FOLLOW Sets ==========" << std::endl;
-        for (const auto& pair : followSets) {
-            std::cout << "FOLLOW(" << pair.first.toString() << ") = { ";
-            for (const auto& sym : pair.second) {
-                std::cout << sym.toString() << " ";
+        for (const auto& prod : productions) {
+            const Symbol& nonTerminal = prod.left;
+            if (followSets.find(nonTerminal) != followSets.end()) {
+                std::cout << "FOLLOW(" << nonTerminal.toString() << ") = { ";
+                for (const auto& sym : followSets.at(nonTerminal)) {
+                    std::cout << sym.toString() << " ";
+                }
+                std::cout << "}" << std::endl;
             }
-            std::cout << "}" << std::endl;
         }
     }
 

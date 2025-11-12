@@ -74,13 +74,7 @@ namespace Compiler {
         void loadFromFile(const std::string& filename);
 
         // 语法规则解析
-        void parseGrammarLine(const std::string& line, int index);
-
-        // 符号提取
-        void extractSymbols();
-
-        // 验证文法
-        void validate() const;
+        void parseGrammarLine(const std::string& line);
 
         // 计算FIRST集
         void computeFirstSets();
