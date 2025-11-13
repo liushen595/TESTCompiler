@@ -5,14 +5,14 @@
 #include <string>
 #include <memory>
 
-int main(/*int argc, char* argv[]*/) {
-    // if (argc < 3) {
-    //     std::cout << "Usage: " << argv[0] << " <rules_file> <output_header_file>" << std::endl;
-    //     return 1;
-    // }
+int main(int argc, char* argv[]) {
+    if (argc < 3) {
+        std::cout << "Usage: " << argv[0] << " <rules_file> <output_header_file>" << std::endl;
+        return 1;
+    }
 
-    std::string rulesFile = "input/lex_rules.txt";
-    std::string outputFile = "build/generated/DFA_Tables.hpp";
+    std::string rulesFile = argv[1];
+    std::string outputFile = argv[2];
 
     // 创建正则表达式引擎
     Compiler::RegexEngine regexEngine;

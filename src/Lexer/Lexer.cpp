@@ -82,9 +82,9 @@ namespace Compiler {
         }
     }
 
-    // 跳过空白字符
+    // 跳过空白字符（包括换行符）
     void Lexer::skipWhitespace() {
-        while (std::isspace(currentChar()) && currentChar() != '\n') {
+        while (std::isspace(currentChar())) {
             advance();
         }
     }
@@ -111,7 +111,7 @@ namespace Compiler {
 
     // 获取下一个令牌
     Token Lexer::nextToken() {
-        // 跳过空白字符
+        // 跳过空白字符（包括换行符）
         skipWhitespace();
 
         // 获取当前字符
@@ -120,14 +120,6 @@ namespace Compiler {
         // EOF 处理
         if (c == '\0') {
             return Token(TokenType::EOF_TOKEN, "", line_, column_, position_);
-        }
-
-        // 换行符处理
-        if (c == '\n') {
-            // 如果遇到换行符，返回一个单字符令牌
-            Token token(TokenType::SINGLEWORD, "\\n", line_, column_, position_);
-            advance();
-            return token;
         }
 
         // 使用 DFA 表驱动词法分析
@@ -267,11 +259,6 @@ namespace Compiler {
                 // 如果遇到EOF token，结束循环
                 if (token.type == TokenType::EOF_TOKEN) {
                     break;
-                }
-
-                // 跳过换行符（可选，根据需求）
-                if (token.type == TokenType::SINGLEWORD && token.value == "\\n") {
-                    continue;
                 }
 
                 tokens.push_back(token);
