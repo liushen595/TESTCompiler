@@ -8,7 +8,10 @@
 #include <fstream>
 #include <iostream>
 #include <memory>
+#include <stack>
 #include "Lexer.hpp"
+#include "LL1_Table.hpp"
+#include "AST.hpp"
 
 namespace Compiler {
 
@@ -41,68 +44,29 @@ namespace Compiler {
     private:
         std::shared_ptr<Lexer> lexer_; // 词法分析器智能指针
         Token currentToken_; // 当前token
+        std::stack<std::pair<std::string, SymbolType>> parseStack; // 分析栈
+        std::stack<std::shared_ptr<ASTNode>> astStack; // AST构造栈
+        std::stack<int> productionStack; // 产生式栈，记录待规约的产生式索引
+        std::shared_ptr<ASTNode> astRoot_; // AST根节点
 
         // 获取下一个token
         void advance();
 
-        // 检查当前token是否匹配期望的值
-        bool match(const std::string& expected);
+        // 将Token转换为终结符字符串
+        std::string tokenToTerminal(const Token& token);
 
-        // 检查当前token类型是否匹配期望的类型
-        bool match(TokenType expectedType);
+        // 初始化分析栈
+        void initializeStack();
 
-        // 消费一个期望的token
-        void consume(const std::string& expected);
-
-        // 消费一个期望类型的token
-        void consume(TokenType expectedType);
-
-        // 获取当前token
-        const Token& getCurrentToken() const;
+        // 获取产生式索引
+        int getProductionIndex(const std::string& nonTerminal, const std::string& terminal);
 
         // 获取当前token位置信息
         std::size_t getCurrentLine() const;
         std::size_t getCurrentColumn() const;
 
-        // 抛出语法分析异常
-        void throwParseError(const std::string& message);
-
-        // 语法分析函数 - 对应每条语法规则
-        // 注意：这些方法现在是预留的，您将用LL分析器替换它们
-        // <program> → <declaration_list> <statement_list>
-        void program();
-        // <declaration_list> → <declaration_list> <declaration_stat> | ε
-        void declaration_list();
-        // <declaration_stat> → int ID;
-        void declaration_stat();
-        // <statement_list> → <statement_list> <statement> | ε
-        void statement_list();
-        // <statement> → <if_stat> | <while_stat> | <for_stat> | <read_stat> | <write_stat> | <compound_stat> | <expression_stat>
-        void statement();
-        // <if_stat> → if(<expression>) <statement> [else <statement>]
-        void if_stat();
-        // <while_stat> → while(<expression>) <statement>
-        void while_stat();
-        // <for_stat> → for(<expression>;<expression>;<expression>) <statement>
-        void for_stat();
-        // <read_stat> → read ID;
-        void read_stat();
-        // <write_stat> → write <expression>;
-        void write_stat();
-        // <compound_stat> → { <statement_list> }
-        void compound_stat();
-        // <expression_stat> → <expression>; | ;
-        void expression_stat();
-        // <expression> → ID=<bool_expr> | <bool_expr>
-        void expression();
-        // <bool_expr> → <additive_expr> | <additive_expr>(>|<|>=|<=|==|!=)<additive_expr>
-        void bool_expr();
-        // <additive_expr> → <term>{(+|-)<term>}
-        void additive_expr();
-        // <term> → <factor>{(*|/)<factor>}
-        void term();
-        // <factor> → (<expression>) | ID | NUM
-        void factor();
+        // AST构造相关方法
+        void buildASTNode(const Production& prod);
 
     public:
         // 构造函数 - 接受词法分析器智能指针
@@ -113,6 +77,12 @@ namespace Compiler {
 
         // 执行语法分析
         void parse();
+
+        // 获取AST根节点
+        std::shared_ptr<ASTNode> getAST() const { return astRoot_; }
+
+        // 打印AST
+        void printAST(std::ostream& os = std::cout) const;
     };
 
 } // namespace Compiler

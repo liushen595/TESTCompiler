@@ -51,8 +51,10 @@ int main(int argc, char* argv[]) {
         std::cout << "Starting syntax analysis..." << std::endl;
         parser.parse();
 
-        std::cout << "Syntax analysis completed!" << std::endl;
-
+        std::cout << "\n" << std::string(60, '=') << std::endl;
+        std::cout << "Printing Abstract Syntax Tree..." << std::endl;
+        std::cout << std::string(60, '=') << std::endl;
+        parser.printAST(std::cerr);
     }
     catch (const Compiler::LexerException &ex) {
         std::cerr << "\033[31m" << ex.getFullMessage() << "\033[0m" << std::endl;
