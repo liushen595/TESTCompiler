@@ -23,6 +23,7 @@ namespace Compiler {
         case TokenType::COMMENT_FIRST: return "COMMENT_FIRST";
         case TokenType::COMMENT_LAST: return "COMMENT_LAST";
         case TokenType::SINGLEWORD: return "SINGLEWORD";
+        case TokenType::EOF_TOKEN: return "EOF_TOKEN";
         case TokenType::UNKNOWN: return "UNKNOWN";
         default: return "UNKNOWN";
         }
@@ -81,9 +82,9 @@ namespace Compiler {
         }
     }
 
-    // 跳过空白字符
+    // 跳过空白字符（包括换行符）
     void Lexer::skipWhitespace() {
-        while (std::isspace(currentChar()) && currentChar() != '\n') {
+        while (std::isspace(currentChar())) {
             advance();
         }
     }
@@ -110,7 +111,7 @@ namespace Compiler {
 
     // 获取下一个令牌
     Token Lexer::nextToken() {
-        // 跳过空白字符
+        // 跳过空白字符（包括换行符）
         skipWhitespace();
 
         // 获取当前字符
@@ -118,15 +119,7 @@ namespace Compiler {
 
         // EOF 处理
         if (c == '\0') {
-            return Token(TokenType::UNKNOWN, "", line_, column_, position_);
-        }
-
-        // 换行符处理
-        if (c == '\n') {
-            // 如果遇到换行符，返回一个单字符令牌
-            Token token(TokenType::SINGLEWORD, "\\n", line_, column_, position_);
-            advance();
-            return token;
+            return Token(TokenType::EOF_TOKEN, "", line_, column_, position_);
         }
 
         // 使用 DFA 表驱动词法分析
@@ -232,6 +225,29 @@ namespace Compiler {
         return Token(TokenType::UNKNOWN, value, startLine, startColumn, startPos);
     }
 
+    // 查看下一个令牌但不消费它
+    Token Lexer::peekToken() {
+        // 保存当前状态
+        std::size_t savedPosition = position_;
+        std::size_t savedLine = line_;
+        std::size_t savedColumn = column_;
+
+        // 获取下一个token
+        Token token = nextToken();
+
+        // 恢复状态
+        position_ = savedPosition;
+        line_ = savedLine;
+        column_ = savedColumn;
+
+        return token;
+    }
+
+    // 检查是否到达输入结尾
+    bool Lexer::isAtEnd() const {
+        return position_ >= input_.size();
+    }
+
     // 令牌化整个输入
     std::vector<Token> Lexer::tokenize() {
         std::vector<Token> tokens;
@@ -240,9 +256,9 @@ namespace Compiler {
             while (currentChar() != '\0') {
                 Token token = nextToken();
 
-                // 跳过换行符（可选，根据需求）
-                if (token.type == TokenType::SINGLEWORD && token.value == "\\n") {
-                    continue;
+                // 如果遇到EOF token，结束循环
+                if (token.type == TokenType::EOF_TOKEN) {
+                    break;
                 }
 
                 tokens.push_back(token);
@@ -250,16 +266,14 @@ namespace Compiler {
                 // 如果遇到未知 token，可以选择报错或继续
                 if (token.type == TokenType::UNKNOWN && !token.value.empty()) {
                     // 这里可以记录错误，但继续分析
-                    std::cerr << "Warning: Unknown char '" << token.value
-                        << "' in line " << token.line
+                    std::cerr << "Warning: Unknown character '" << token.value
+                        << "' at line " << token.line
                         << ", column " << token.column << std::endl;
                 }
             }
         }
         catch (const LexerException& ex) {
-            // 捕获词法分析异常，输出错误信息
-            std::cerr << ex.getFullMessage() << std::endl;
-            throw; // 重新抛出异常以便上层处理
+            throw ex; // 重新抛出异常以便上层处理
         }
 
         return tokens;
@@ -270,9 +284,9 @@ namespace Compiler {
 // 输出词法分析结果，格式适合语法分析器使用
 void outputLexerResults(const std::vector<Compiler::Token>& tokens, std::ostream& out) {
     // 输出文件头注释
-    out << "# 词法分析结果" << std::endl;
-    out << "# 格式: <TokenType, TokenValue, Line, Column>" << std::endl;
-    out << "# 总计: " << tokens.size() << " 个词法单元" << std::endl;
+    out << "# Lexical Analysis Results" << std::endl;
+    out << "# Format: TokenType TokenValue Line Column" << std::endl;
+    out << "# Total: " << tokens.size() << " tokens" << std::endl;
     out << std::endl;
 
     // 输出每个 token，格式：类型 值 行号 列号
@@ -319,11 +333,11 @@ void outputLexerResults(const std::vector<Compiler::Token>& tokens, std::ostream
             valueStr = "\"" + escaped + "\"";
         }
 
-        // 输出格式：<类型, 值, 行号, 列号>
-        out << "<" << typeStr << ", " << valueStr << ", "
-            << token.line << ", " << token.column << ">" << std::endl;
+        // 输出格式：类型 值 行号 列号
+        out << typeStr << " " << valueStr << " "
+            << token.line << " " << token.column << std::endl;
     }
 
     out << std::endl;
-    out << "# 词法分析完成" << std::endl;
+    out << "# Lexical analysis completed" << std::endl;
 }

@@ -8,12 +8,13 @@
             "program": "${command:cmake.launchTargetPath}",
             "args": [
                 "${file}",
+                "${workspaceFolder}/include/LL1_Table.hpp",
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [],
             // "preLaunchTask": "cmake: debug",
-            "externalConsole": true
+            "console": "externalTerminal"
         },
         {
             "name": "(GDB) Launch TESTCompiler",
