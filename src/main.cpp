@@ -4,14 +4,8 @@
 #include <iomanip>
 #include <map>
 
-// 引入词法分析器头文件
-#ifdef LEXER_ENABLED
 #include "Lexer.hpp"
-#endif
-
-#ifdef PARSER_ENABLED
 #include "Parser.hpp"
-#endif
 
 int main(int argc, char* argv[]) {
     std::cout << "TESTCompiler - 编译器" << std::endl;
@@ -41,7 +35,6 @@ int main(int argc, char* argv[]) {
 
     std::cout << "文件内容读取成功，大小: " << content.size() << " 字节" << std::endl;
 
-#ifdef LEXER_ENABLED
     // 生成输出文件路径（与输入文件同目录，添加.tokens后缀）
     std::string outputFile = inputFile + ".tokens";
     std::ofstream lexOut(outputFile);
@@ -77,9 +70,8 @@ int main(int argc, char* argv[]) {
         lexOut.close();
         return 1;
     }
-#endif
 
-#ifdef PARSER_ENABLED
+
     // TODO: 语法分析
     try {
         std::cout << "开始语法分析..." << std::endl;
@@ -93,7 +85,6 @@ int main(int argc, char* argv[]) {
         std::cerr << "Compilation terminated due to parse errors." << std::endl;
         return 1;
     }
-#endif
 
     std::cout << "编译完成" << std::endl;
     return 0;
