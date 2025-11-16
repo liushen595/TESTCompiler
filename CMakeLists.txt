@@ -54,7 +54,7 @@ endforeach()
 
 # 包含目录
 include_directories(include)
-include_directories(build/generated)
+
 
 # 编译器主程序源文件
 file(GLOB_RECURSE COMPILER_SOURCES 
@@ -70,13 +70,10 @@ file(GLOB_RECURSE COMPILER_SOURCES
 file(GLOB_RECURSE COMPILER_HEADERS
     include/*.hpp
     include/*.h
-    build/generated/*.hpp
-    build/generated/*.h
 )
 
 # 创建主可执行文件，包含所有源文件
 add_executable(TESTCompiler ${COMPILER_SOURCES})
-target_include_directories(TESTCompiler PRIVATE include build/generated)
 
 # 添加宏定义
 # target_compile_definitions(TESTCompiler PRIVATE LEXER_ENABLED)
@@ -112,7 +109,6 @@ if(BUILD_TESTS)
             src/Parser/*.cpp
         )
         add_executable(LexerTest ${LEXER_TEST_SOURCES} ${TEST_COMPILER_SOURCES})
-        target_include_directories(LexerTest PRIVATE include build/generated)
         add_test(NAME LexerTest COMMAND LexerTest)
     endif()
 endif()
@@ -122,7 +118,6 @@ file(MAKE_DIRECTORY ${CMAKE_SOURCE_DIR}/build/Debug/bin)
 file(MAKE_DIRECTORY ${CMAKE_SOURCE_DIR}/build/Debug/lib)
 file(MAKE_DIRECTORY ${CMAKE_SOURCE_DIR}/build/Release/bin)
 file(MAKE_DIRECTORY ${CMAKE_SOURCE_DIR}/build/Release/lib)
-file(MAKE_DIRECTORY ${CMAKE_SOURCE_DIR}/build/generated)
 
 # 打印配置信息
 message(STATUS "Project: ${PROJECT_NAME}")
