@@ -27,4 +27,6 @@
 *.db
 *.opendb
 prompt.txt
+plan.md
 test.tst.tokens
+test.tst.asm
