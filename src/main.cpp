@@ -6,6 +6,7 @@
 
 #include "Lexer.hpp"
 #include "Parser.hpp"
+#include "Semantic.hpp"
 
 int main(int argc, char* argv[]) {
     std::cout << "TESTCompiler - 编译器" << std::endl;
@@ -76,13 +77,28 @@ int main(int argc, char* argv[]) {
     try {
         std::cout << "开始语法分析..." << std::endl;
         std::string tokenFile = inputFile + ".tokens";
-        Compiler::Parser parser(tokenFile);
+
+        // 创建语义分析器
+        auto semantic = std::make_shared<Compiler::SemanticAnalyzer>();
+
+        // 创建语法分析器，传入语义分析器
+        Compiler::Parser parser(tokenFile, semantic);
         parser.parse();
         std::cout << "语法分析完成" << std::endl;
+
+        // 导出抽象机代码
+        std::string codeOut = inputFile + ".asm";
+        semantic->writeCodeToFile(codeOut);
+        std::cout << "目标代码已导出: " << codeOut << std::endl;
     }
     catch (const Compiler::ParseException &ex) {
         std::cerr << "\033[31m" << ex.getFullMessage() << "\033[0m" << std::endl;
         std::cerr << "Compilation terminated due to parse errors." << std::endl;
+        return 1;
+    }
+    catch (const Compiler::SemanticException &ex) {
+        std::cerr << "\033[31m" << ex.getFullMessage() << "\033[0m" << std::endl;
+        std::cerr << "Compilation terminated due to semantic errors." << std::endl;
         return 1;
     }
 

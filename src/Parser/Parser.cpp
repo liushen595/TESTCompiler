@@ -5,8 +5,8 @@
 namespace Compiler {
 
     // 构造函数 - 接受token文件路径
-    Parser::Parser(const std::string& tokenFile)
-        : tokenFilePath_(tokenFile), currentIndex_(0), currentToken_(Token(TokenType::UNKNOWN, "", 0, 0, 0)) {
+    Parser::Parser(const std::string& tokenFile, std::shared_ptr<SemanticAnalyzer> semantic)
+        : tokenFilePath_(tokenFile), currentIndex_(0), currentToken_(Token(TokenType::UNKNOWN, "", 0, 0, 0)), semantic_(semantic) {
         if (!loadTokensFromFile(tokenFile)) {
             throw ParseException("无法加载token文件: " + tokenFile, 0, 0);
         }
@@ -16,8 +16,8 @@ namespace Compiler {
     }
 
     // 构造函数 - 接受token向量
-    Parser::Parser(const std::vector<Token>& tokens)
-        : tokens_(tokens), currentIndex_(0), currentToken_(Token(TokenType::UNKNOWN, "", 0, 0, 0)) {
+    Parser::Parser(const std::vector<Token>& tokens, std::shared_ptr<SemanticAnalyzer> semantic)
+        : tokens_(tokens), currentIndex_(0), currentToken_(Token(TokenType::UNKNOWN, "", 0, 0, 0)), semantic_(semantic) {
         if (!tokens_.empty()) {
             currentToken_ = tokens_[0];
         }
@@ -81,11 +81,6 @@ namespace Compiler {
         }
     }
 
-    // 获取当前token的值
-    // std::string Parser::getCurrentTokenValue() const {
-    //     return currentToken_.value;
-    // }
-
     // 检查当前token是否匹配期望的值
     bool Parser::match(const std::string& expected) {
         return currentToken_.value == expected;
@@ -94,10 +89,10 @@ namespace Compiler {
     // 消费一个期望的token
     void Parser::consume(const std::string& expected) {
         if (currentIndex_ >= tokens_.size()) {
-            throwParseError("Unexpected end of input, expected '" + expected + "'");
+            throw ParseException("Unexpected end of input, expected '" + expected + "'", getCurrentLine(), getCurrentColumn());
         }
         if (!match(expected)) {
-            throwParseError("Expect '" + expected + "', but read '" + currentToken_.value + "'");
+            throw ParseException("Expect '" + expected + "', but read '" + currentToken_.value + "'", getCurrentLine(), getCurrentColumn());
         }
         advance();
     }
@@ -117,11 +112,6 @@ namespace Compiler {
         return 0;
     }
 
-    // 抛出语法分析异常
-    void Parser::throwParseError(const std::string& message) {
-        throw ParseException(message, getCurrentLine(), getCurrentColumn());
-    }
-
     // 执行语法分析
     void Parser::parse() {
         try {
@@ -132,6 +122,9 @@ namespace Compiler {
         catch (const ParseException& e) {
             throw e; // 重新抛出异常
         }
+        catch (const SemanticException& e) {
+            throw e; // 重新抛出异常
+        }
     }
 
     // <program> → { <declaration_list> <statement_list> }
@@ -140,11 +133,16 @@ namespace Compiler {
 
         consume("{");
 
+        // 初始化语义状态
+        semantic_->reset();
+
         declaration_list();
 
         statement_list();
 
         consume("}");
+
+        semantic_->emitSTOP();
     }
 
     // <declaration_list> → <declaration_list> <declaration_stat> | ε
@@ -161,8 +159,14 @@ namespace Compiler {
         consume("int");
 
         if (currentIndex_ >= tokens_.size() || currentToken_.type != TokenType::IDENTIFIER) {
-            throwParseError("Expect identifier");
+            throw ParseException("Expect identifier", getCurrentLine(), getCurrentColumn());
         }
+        // 记录声明的变量名与位置信息
+        std::string varName = currentToken_.value;
+        std::size_t idLine = currentToken_.line;
+        std::size_t idCol = currentToken_.column;
+        // 声明插入符号表（可能抛语义错误：重复定义）
+        semantic_->declareVariable(varName, idLine, idCol);
         advance(); // 消费ID
 
         consume(";");
@@ -209,17 +213,25 @@ namespace Compiler {
         consume("if");
         consume("(");
 
-        expression();
+        expression(); // 结果在栈顶，非零为真
 
         consume(")");
 
-        statement();
+        // 生成分支控制
+        std::string L1 = semantic_->newLabel();
+        std::string L2 = semantic_->newLabel();
+        semantic_->emitBRF(L1);
 
-        // 可选的else部分
-        if (match("else")) {
+        statement(); // then
+
+        semantic_->emitBR(L2);
+        semantic_->emitLabel(L1);
+
+        if (match("else")) { // else 可选
             advance();
             statement();
         }
+        semantic_->emitLabel(L2);
     }
 
     // <while_stat> → while(<expression>) <statement>
@@ -227,11 +239,18 @@ namespace Compiler {
         consume("while");
         consume("(");
 
-        expression();
+        // while 起始标签
+        std::string L1 = semantic_->newLabel();
+        std::string L2 = semantic_->newLabel();
+        semantic_->emitLabel(L1);
 
+        expression();
         consume(")");
+        semantic_->emitBRF(L2);
 
         statement();
+        semantic_->emitBR(L1);
+        semantic_->emitLabel(L2);
     }
 
     // <for_stat> → for(<expression>;<expression>;<expression>) <statement>
@@ -239,19 +258,34 @@ namespace Compiler {
         consume("for");
         consume("(");
 
+        // init
         expression();
-
+        semantic_->emitPop();
         consume(";");
 
+        // cond
+        std::string L1 = semantic_->newLabel();
+        std::string L2 = semantic_->newLabel();
+        std::string L3 = semantic_->newLabel();
+        std::string L4 = semantic_->newLabel();
+        semantic_->emitLabel(L1);
         expression();
-
+        semantic_->emitBRF(L2);
+        semantic_->emitBR(L3);
         consume(";");
 
+        // step
+        semantic_->emitLabel(L4);
         expression();
-
+        semantic_->emitPop();
+        semantic_->emitBR(L1);
         consume(")");
 
+        // body
+        semantic_->emitLabel(L3);
         statement();
+        semantic_->emitBR(L4);
+        semantic_->emitLabel(L2);
     }
 
     // <read_stat> → read ID;
@@ -259,7 +293,18 @@ namespace Compiler {
         consume("read");
 
         if (currentIndex_ >= tokens_.size() || currentToken_.type != TokenType::IDENTIFIER) {
-            throwParseError("Expect identifier");
+            throw ParseException("Expect identifier", getCurrentLine(), getCurrentColumn());
+        }
+        {
+            std::string name = currentToken_.value;
+            std::size_t l = currentToken_.line, c = currentToken_.column;
+            int addr = semantic_->lookupAddress(name);
+            if (addr < 0) {
+                throw SemanticException("Use of undeclared variable '" + name + "'", l, c);
+            }
+            semantic_->emitIN();
+            semantic_->emitStore(addr);
+            semantic_->emitPop();
         }
         advance();
 
@@ -271,6 +316,7 @@ namespace Compiler {
         consume("write");
 
         expression();
+        semantic_->emitOUT();
 
         consume(";");
     }
@@ -292,6 +338,7 @@ namespace Compiler {
         }
 
         expression();
+        semantic_->emitPop();
 
         consume(";");
     }
@@ -309,8 +356,15 @@ namespace Compiler {
 
             if (match("=")) {
                 // 赋值表达式：ID = <bool_expr>
+                std::string name = savedToken.value;
+                std::size_t l = savedToken.line, c = savedToken.column;
+                int addr = semantic_->lookupAddress(name);
+                if (addr < 0) {
+                    throw SemanticException("Assignment to undeclared variable '" + name + "'", l, c);
+                }
                 advance(); // 消费 =
                 bool_expr();
+                semantic_->emitStore(addr);
             }
             else {
                 // 布尔表达式：回退并分析为bool_expr
@@ -331,9 +385,17 @@ namespace Compiler {
         // 检查是否有比较操作符
         if (match(">") || match("<") || match(">=") ||
             match("<=") || match("==") || match("!=")) {
+            std::string op = currentToken_.value;
             advance(); // 消费比较操作符
 
             additive_expr();
+
+            if (op == ">") semantic_->emitGT();
+            else if (op == "<") semantic_->emitLES();
+            else if (op == ">=") semantic_->emitGE();
+            else if (op == "<=") semantic_->emitLE();
+            else if (op == "==") semantic_->emitEQ();
+            else if (op == "!=") semantic_->emitNOTEQ();
         }
     }
 
@@ -342,9 +404,11 @@ namespace Compiler {
         term();
 
         while (match("+") || match("-")) {
+            std::string op = currentToken_.value;
             advance(); // 消费操作符
-
             term();
+            if (op == "+") semantic_->emitAdd();
+            else semantic_->emitSub();
         }
     }
 
@@ -353,9 +417,11 @@ namespace Compiler {
         factor();
 
         while (match("*") || match("/")) {
+            std::string op = currentToken_.value;
             advance(); // 消费操作符
-
             factor();
+            if (op == "*") semantic_->emitMult();
+            else semantic_->emitDiv();
         }
     }
 
@@ -371,10 +437,22 @@ namespace Compiler {
         else if (currentIndex_ < tokens_.size() &&
             (currentToken_.type == TokenType::IDENTIFIER ||
                 currentToken_.type == TokenType::NUMBER)) {
+            if (currentToken_.type == TokenType::IDENTIFIER) {
+                std::string name = currentToken_.value;
+                std::size_t l = currentToken_.line, c = currentToken_.column;
+                int addr = semantic_->lookupAddress(name);
+                if (addr < 0) {
+                    throw SemanticException("Use of undeclared variable '" + name + "'", l, c);
+                }
+                semantic_->emitLoad(addr);
+            }
+            else { // NUMBER
+                semantic_->emitLoadI(currentToken_.value);
+            }
             advance(); // 消费ID或NUM
         }
         else {
-            throwParseError("Expect factor (ID, NUM, or (expression))");
+            throw ParseException("Expect factor (ID, NUM, or (expression))", getCurrentLine(), getCurrentColumn());
         }
     }
 

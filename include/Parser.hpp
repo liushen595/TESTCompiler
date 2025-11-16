@@ -8,6 +8,7 @@
 #include <fstream>
 #include <iostream>
 #include "Lexer.hpp"
+#include "Semantic.hpp"
 
 namespace Compiler {
 
@@ -43,14 +44,13 @@ namespace Compiler {
         Token currentToken_; // 当前token
         std::string tokenFilePath_; // Token文件路径
 
+        std::shared_ptr<SemanticAnalyzer> semantic_; // 语义分析器指针
+
         // 从token文件读取tokens
         bool loadTokensFromFile(const std::string& tokenFile);
 
         // 获取下一个token
         void advance();
-
-        // 获取当前token的值
-        // std::string getCurrentTokenValue() const;
 
         // 检查当前token是否匹配期望的值
         bool match(const std::string& expected);
@@ -61,9 +61,6 @@ namespace Compiler {
         // 获取当前token位置信息
         std::size_t getCurrentLine() const;
         std::size_t getCurrentColumn() const;
-
-        // 抛出语法分析异常
-        void throwParseError(const std::string& message);
 
         // 语法分析函数 - 对应每条语法规则
         // <program> → <declaration_list> <statement_list>
@@ -103,10 +100,10 @@ namespace Compiler {
 
     public:
         // 构造函数 - 接受token文件路径
-        Parser(const std::string& tokenFile);
+        Parser(const std::string& tokenFile, std::shared_ptr<SemanticAnalyzer> semantic);
 
         // 构造函数 - 接受token向量
-        Parser(const std::vector<Token>& tokens);
+        Parser(const std::vector<Token>& tokens, std::shared_ptr<SemanticAnalyzer> semantic);
 
         // 执行语法分析
         void parse();
