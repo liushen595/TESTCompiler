@@ -6,13 +6,15 @@
             "type": "shell",
             "command": "cmake",
             "args": [
+                "-DCMAKE_BUILD_TYPE:STRING=Release",
+                "-DCMAKE_SYSTEM_PROCESSOR:STRING=x64",
+                "-DCMAKE_EXPORT_COMPILE_COMMANDS:BOOL=TRUE",
                 "-B",
-                "${workspaceFolder}/bin/build",
-                "-DCURRENT_FILE=${file}",
+                "${workspaceFolder}/build/cmake-build",
                 "-S",
                 "${workspaceFolder}",
-                "-A",
-                "x64"
+                "-G",
+                "Ninja"
             ],
             "problemMatcher": [],
             "group": {
@@ -21,12 +23,12 @@
             }
         },
         {
-            "label": "cmake: debug",
+            "label": "cmake: debug TESTCompiler",
             "type": "shell",
             "command": "cmake",
             "args": [
                 "--build",
-                "${workspaceFolder}/bin/build",
+                "${workspaceFolder}/build/cmake-build",
                 "--config",
                 "Debug",
                 "--target",
@@ -39,17 +41,15 @@
                 "kind": "build",
                 "isDefault": true
             },
-            "dependsOn": [
-                "cmake: configure active file"
-            ]
+            "dependsOn": []
         },
         {
-            "label": "cmake: release",
+            "label": "cmake: release TESTCompiler",
             "type": "shell",
             "command": "cmake",
             "args": [
                 "--build",
-                "${workspaceFolder}/bin/build",
+                "${workspaceFolder}/build/cmake-build",
                 "--config",
                 "Release",
                 "--target",
@@ -62,9 +62,91 @@
                 "kind": "build",
                 "isDefault": false
             },
-            "dependsOn": [
-                "cmake: configure active file"
-            ]
+            "dependsOn": []
+        },
+        {
+            "label": "cmake: debug DFAGenerator",
+            "type": "shell",
+            "command": "cmake",
+            "args": [
+                "--build",
+                "${workspaceFolder}/build/cmake-build",
+                "--config",
+                "Debug",
+                "--target",
+                "DFAGenerator"
+            ],
+            "problemMatcher": [
+                "$msCompile"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "dependsOn": []
+        },
+        {
+            "label": "cmake: release DFAGenerator",
+            "type": "shell",
+            "command": "cmake",
+            "args": [
+                "--build",
+                "${workspaceFolder}/build/cmake-build",
+                "--config",
+                "Release",
+                "--target",
+                "DFAGenerator"
+            ],
+            "problemMatcher": [
+                "$msCompile"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "dependsOn": []
+        },
+        {
+            "label": "cmake: debug ParserGenerator",
+            "type": "shell",
+            "command": "cmake",
+            "args": [
+                "--build",
+                "${workspaceFolder}/build/cmake-build",
+                "--config",
+                "Debug",
+                "--target",
+                "ParserGenerator"
+            ],
+            "problemMatcher": [
+                "$msCompile"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "dependsOn": []
+        },
+        {
+            "label": "cmake: release ParserGenerator",
+            "type": "shell",
+            "command": "cmake",
+            "args": [
+                "--build",
+                "${workspaceFolder}/build/cmake-build",
+                "--config",
+                "Release",
+                "--target",
+                "ParserGenerator"
+            ],
+            "problemMatcher": [
+                "$msCompile"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "dependsOn": []
         },
         {
             "label": "cmake: clean",

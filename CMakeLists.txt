@@ -61,6 +61,7 @@ file(GLOB_RECURSE COMPILER_SOURCES
     src/AST/*.cpp
     src/Lexer/*.cpp
     src/Parser/*.cpp
+    src/Semantic/*.cpp
     src/*.cpp
     src/*.cc
     src/*.cxx
@@ -110,6 +111,7 @@ if(BUILD_TESTS)
             src/Lexer/*.cpp
             src/AST/*.cpp
             src/Parser/*.cpp
+            src/Semantic/*.cpp
         )
         add_executable(LexerTest ${LEXER_TEST_SOURCES} ${TEST_COMPILER_SOURCES})
         target_include_directories(LexerTest PRIVATE include build/generated)
