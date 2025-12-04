@@ -564,9 +564,28 @@ namespace Compiler {
                 }
                 else {
                     // 错误:不匹配
+                    std::string errorMsg;
+                    if (stackTop.first == ";") {
+                        errorMsg = "Missing semicolon ';'";
+                        if (currentTerminal != "$") {
+                            errorMsg += " before '" + currentTerminal + "'";
+                        }
+                    }
+                    else if (stackTop.first == ")") {
+                        errorMsg = "Unclosed parenthesis, expected ')'";
+                    }
+                    else if (stackTop.first == "}") {
+                        errorMsg = "Unclosed block, expected '}'";
+                    }
+                    else if (stackTop.first == "]") {
+                        errorMsg = "Unclosed bracket, expected ']'";
+                    }
+                    else {
+                        errorMsg = "expected '" + stackTop.first + "' but found '" + currentTerminal + "'";
+                    }
+
                     throw ParseException(
-                        "expected '" + stackTop.first +
-                        "' but found '" + currentTerminal + "'",
+                        errorMsg,
                         getCurrentLine(), getCurrentColumn()
                     );
                 }
@@ -578,8 +597,35 @@ namespace Compiler {
 
                 if (productionIdx == -1) {
                     // 错误:分析表中没有对应项
+                    std::string errorMsg;
+                    if (currentTerminal == "$") {
+                        errorMsg = "Unexpected end of file. ";
+                        // 如果栈顶是非终结符，可能是在等待某些结构的结束
+                        if (stackTop.first.find("statement") != std::string::npos) {
+                            errorMsg += "Maybe missing '}' to close a block?";
+                        }
+                        else {
+                            errorMsg += "Expected to parse " + stackTop.first;
+                        }
+                    }
+                    else {
+                        errorMsg = "Unexpected token '" + currentTerminal + "'";
+                        if (stackTop.first == "<statement>" || stackTop.first == "<statement_list>") {
+                            errorMsg += ". Expected a statement or '}'";
+                        }
+                        else if (stackTop.first == "<expression>") {
+                            errorMsg += " in expression";
+                        }
+                        else if (stackTop.first == "<declaration_stat>") {
+                            errorMsg += " in declaration";
+                        }
+                        else {
+                            errorMsg += " while parsing " + stackTop.first;
+                        }
+                    }
+
                     throw ParseException(
-                        "unexpected token '" + currentTerminal,
+                        errorMsg,
                         getCurrentLine(), getCurrentColumn()
                     );
                 }
