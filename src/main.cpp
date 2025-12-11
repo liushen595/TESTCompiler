@@ -10,15 +10,15 @@
 #include "Simulator.hpp"
 
 int main(int argc, char* argv[]) {
-    std::cout << "TESTCompiler - 编译器" << std::endl;
+    // std::cout << "TESTCompiler - 编译器" << std::endl;
 
     if (argc < 2) {
-        std::cout << "使用方法: " << argv[0] << " <输入文件>" << std::endl;
+        std::cerr << "使用方法: " << argv[0] << " <输入文件>" << std::endl;
         return 1;
     }
 
     std::string inputFile = argv[1];
-    std::cout << "正在处理文件: " << inputFile << std::endl;
+    // std::cout << "正在处理文件: " << inputFile << std::endl;
 
     // 检查文件是否存在
     std::ifstream file(inputFile);
@@ -35,7 +35,7 @@ int main(int argc, char* argv[]) {
     }
     file.close();
 
-    std::cout << "文件内容读取成功，大小: " << content.size() << " 字节" << std::endl;
+    // std::cout << "文件内容读取成功，大小: " << content.size() << " 字节" << std::endl;
 
     // 生成输出文件路径（与输入文件同目录，添加.tokens后缀）
     std::string outputFile = inputFile + ".tokens";
@@ -48,20 +48,20 @@ int main(int argc, char* argv[]) {
 
     try {
         // 词法分析
-        std::cout << "\n" << std::string(60, '=') << std::endl;
-        std::cout << "开始词法分析..." << std::endl;
-        std::cout << std::string(60, '=') << std::endl;
+        // std::cout << "\n" << std::string(60, '=') << std::endl;
+        // std::cout << "开始词法分析..." << std::endl;
+        // std::cout << std::string(60, '=') << std::endl;
 
         Compiler::Lexer lexer(content);
         std::vector<Compiler::Token> tokens = lexer.tokenize();
 
-        std::cout << "\n词法分析完成！共识别 " << tokens.size() << " 个词法单元\n" << std::endl;
+        // std::cout << "\n词法分析完成！共识别 " << tokens.size() << " 个词法单元\n" << std::endl;
 
         // 输出词法分析结果到文件
         outputLexerResults(tokens, lexOut);
         lexOut.close();
 
-        std::cout << "词法分析结果已保存到: " << outputFile << std::endl;
+        // std::cout << "词法分析结果已保存到: " << outputFile << std::endl;
     }
     catch (const Compiler::LexerException &ex) {
         // 捕获词法分析异常，输出错误信息
@@ -74,7 +74,7 @@ int main(int argc, char* argv[]) {
     }
 
     try {
-        std::cout << "开始语法分析..." << std::endl;
+        // std::cout << "开始语法分析..." << std::endl;
         std::string tokenFile = inputFile + ".tokens";
 
         // 创建语义分析器
@@ -83,18 +83,18 @@ int main(int argc, char* argv[]) {
         // 创建语法分析器，传入语义分析器
         Compiler::Parser parser(tokenFile, semantic);
         parser.parse();
-        std::cout << "语法分析完成" << std::endl;
+        // std::cout << "语法分析完成" << std::endl;
 
         // 导出抽象机代码
         std::string codeOut = inputFile + ".asm";
         semantic->writeCodeToFile(codeOut);
-        std::cout << "目标代码已导出: " << codeOut << std::endl;
+        // std::cout << "目标代码已导出: " << codeOut << std::endl;
 
         // 模拟执行
-        std::cout << "\n开始模拟执行..." << std::endl;
+        // std::cout << "\n开始模拟执行..." << std::endl;
         Compiler::Simulator simulator(semantic->getCode());
         simulator.run();
-        std::cout << "模拟执行完成" << std::endl;
+        // std::cout << "模拟执行完成" << std::endl;
     }
     catch (const Compiler::ParseException &ex) {
         std::cerr << "\033[31m" << ex.getFullMessage() << "\033[0m" << std::endl;
@@ -107,6 +107,6 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    std::cout << "编译完成" << std::endl;
+    // std::cout << "编译完成" << std::endl;
     return 0;
 }

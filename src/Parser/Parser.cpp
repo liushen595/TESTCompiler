@@ -116,8 +116,6 @@ namespace Compiler {
     void Parser::parse() {
         try {
             program();
-            std::cout << "==语法分析结果==" << std::endl;
-            std::cout << "语法分析成功" << std::endl;
         }
         catch (const ParseException& e) {
             throw e; // 重新抛出异常
