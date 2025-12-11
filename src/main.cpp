@@ -7,6 +7,7 @@
 #include "Lexer.hpp"
 #include "Parser.hpp"
 #include "Semantic.hpp"
+#include "Simulator.hpp"
 
 int main(int argc, char* argv[]) {
     std::cout << "TESTCompiler - 编译器" << std::endl;
@@ -72,8 +73,6 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-
-    // TODO: 语法分析
     try {
         std::cout << "开始语法分析..." << std::endl;
         std::string tokenFile = inputFile + ".tokens";
@@ -90,6 +89,12 @@ int main(int argc, char* argv[]) {
         std::string codeOut = inputFile + ".asm";
         semantic->writeCodeToFile(codeOut);
         std::cout << "目标代码已导出: " << codeOut << std::endl;
+
+        // 模拟执行
+        std::cout << "\n开始模拟执行..." << std::endl;
+        Compiler::Simulator simulator(semantic->getCode());
+        simulator.run();
+        std::cout << "模拟执行完成" << std::endl;
     }
     catch (const Compiler::ParseException &ex) {
         std::cerr << "\033[31m" << ex.getFullMessage() << "\033[0m" << std::endl;
