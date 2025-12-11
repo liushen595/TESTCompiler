@@ -62,6 +62,7 @@ file(GLOB_RECURSE COMPILER_SOURCES
     src/Lexer/*.cpp
     src/Parser/*.cpp
     src/Semantic/*.cpp
+    src/Simulator/*.cpp
     src/*.cpp
     src/*.cc
     src/*.cxx
