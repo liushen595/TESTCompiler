@@ -1,21 +1,30 @@
 ```
-compiler
+Compiler
 ├─ CMakeLists.txt
 ├─ include
-│  └─ Lexer.hpp
+│  ├─ DFA_Tables.hpp
+│  ├─ Lexer.hpp
+│  ├─ Parser.hpp
+│  ├─ Semantic.hpp
+│  └─ Simulator.hpp
 ├─ input
-│  └─ lex_rules.txt
+│  ├─ lex_rules.txt
+│  ├─ lex_rules_test.txt
+│  └─ syntax_rules.txt
 ├─ README.md
 ├─ src
-│  ├─ AST
 │  ├─ Lexer
 │  │  └─ Lexer.cpp
 │  ├─ main.cpp
-│  └─ Parser
+│  ├─ Parser
+│  │  └─ Parser.cpp
+│  ├─ Semantic
+│  │  └─ Semantic.cpp
+│  └─ Simulator
+│     └─ Simulator.cpp
 ├─ tests
-│  ├─ lexer
-│  │  └─ lexer_test.cpp
-│  └─ parser
+│  └─ lexer
+│     └─ lexer_test.cpp
 └─ Tools
    ├─ DFA-Generator
    │  ├─ CMakeLists.txt
@@ -29,8 +38,6 @@ compiler
    │     ├─ NFA.cpp
    │     └─ RegexEngine.cpp
    └─ Parser-Generator
-      ├─ CMakeLists.txt
-      ├─ header
-      └─ source
+      └─ CMakeLists.txt
 
 ```
